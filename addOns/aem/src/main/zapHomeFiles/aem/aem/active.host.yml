@@ -1,0 +1,244 @@
+---
+name: Adobe Experience Manager
+category: SERVER
+tech:
+- JAVA
+- Apache
+vulnerabilities:
+- name: CRXDE Management Interface reachable
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/crx/de/init.jsp"
+    response:
+      header:
+        json: true
+      body:
+        json: select(.contextPath | contains("crx")) | .contextPath
+  - request:
+      paths:
+      - "/crx/de/index.jsp"
+    response:
+      header:
+        html: true
+      body:
+        css: title:contains(CRXDE Lite)
+  - request:
+      paths:
+      - "/crx/de/welcome.jsp"
+    response:
+      header:
+        html: true
+      body:
+        css: h3:contains(Repository Information)
+  - request:
+      paths:
+      - "/crx/explorer/index.jsp"
+    response:
+      header:
+        html: true
+      body:
+        css: title:contains(Content Repository Extreme)
+  - request:
+      paths:
+      - "/crx/packmgr/index.jsp"
+      - "/crx/packageshare/login.html"
+    response:
+      header:
+        status: 302
+        regex: "(?im)Location:\\s+.*?\\/libs\\/granite\\/core\\/content\\/login.html"
+  - request:
+      paths:
+      - "/crx/repository/test"
+    response:
+      header:
+        status: 401
+        regex: "(?im)realm=\"Adobe CRX WebDAV\""
+  - request:
+      paths:
+      - "/crx/explorer/ui/search.jsp"
+    response:
+      body:
+        css: title:contains(Search)
+  - request:
+      paths:
+      - "/crx/explorer/ui/search_form.jsp"
+    response:
+      body:
+        css: form[action=search_form.jsp]
+  - request:
+      paths:
+      - "/crx/explorer/ui/search_results.jsp"
+    response:
+      header:
+        status: 500
+      body:
+        css: title:contains(Server Error)
+  - request:
+      paths:
+      - "/crx/explorer/ui/search_results.jsp"
+      query: "ck=1234567890&Name=null&Query=null"
+    response:
+      body:
+        regex: "(?im)java\\.util\\.NoSuchElementException"
+  - request:
+      paths:
+      - "/crx/server/"
+      - "/crx/server/crx.default/"
+    response:
+      header:
+        html: true
+      body:
+        css: title:contains(Apache Jackrabbit Oak)
+
+
+
+
+- name: Adobe Experience Manager Healtcheck reachable
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/systemalive"
+      - "/systemready"
+    response:
+      header:
+        json: true
+      body:
+        json: .systemStatus
+
+
+
+- name: Adobe Experience Manager Web Console reachable
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/system/console/topology"
+      - "/system/console/configMgr"
+      - "/system/console/productinfo"
+    response:
+      header:
+        status: 302
+        regex: "(?im)Location:\\s+.*?\\/libs\\/granite\\/core\\/content\\/login.html"
+  - request:
+      paths:
+      - "/system/console/res"
+    response:
+      header:
+        empty: true
+
+
+
+
+- name: Adobe Experience Manager Login Page reachable
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/libs/granite/core/content/login.html"
+    response:
+      header:
+        status: 200
+      body:
+        css: meta[name='granite.login.imsLoginUrl']
+
+
+
+
+- name: Adobe Experience Manager DAM reachable
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/platform"
+      - "/content/dam/"
+    response:
+      header:
+        status: 302
+        regex: "(?im)Location:\\s+.*?\\/libs\\/granite\\/core\\/content\\/login.html"
+
+
+
+- name: Apache Sling Interface reachable
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/libs/sling/servlet/errorhandler/404.jsp"
+      - "/libs/sling/servlet/errorhandler/default.jsp"
+      - "/libs/sling/servlet/errorhandler/.content.xml"
+      - "/libs/sling/servlet/errorhandler/_rep_policy.xml"
+      - "/libs/sling/servlet/default/feedentry.jsp"
+      - "/libs/sling/servlet/default/feed.jsp"
+      - "/libs/sling/servlet/default/.content.xml"
+      - "/libs/sling/nodetypes/sling.cnd"
+    response:
+      header:
+        status: 302
+        regex: "(?im)Location:\\s+.*?\\/libs\\/granite\\/core\\/content\\/login.html"
+  - request:
+      paths:
+      - "/libs/sling/topology/connector.2dbf051f-fc0d-40c7-b15b-9aaf24c28678.json"
+    response:
+      header:
+        status: 405
+      body:
+        css: title:contains(Error)
+  - request:
+      method: PUT
+      paths:
+      - "/libs/sling/topology/connector.2dbf051f-fc0d-40c7-b15b-9aaf24c28678.json"
+    response:
+      header:
+        status: 403
+
+
+
+- name: Adobe Experience Manager Default Credentials
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/crx/repository/shouldNotExistsSoWeCanTestForIt"
+      headers:
+        Authorization: "Basic YWRtaW46YWRtaW4="
+        Cookie: ""
+    response:
+      header:
+        status: 404
+      body:
+        regex: "(?im)javax\\.jcr\\.NoSuchWorkspaceException"
+  - request:
+      paths:
+      - "/libs/sling/servlet/errorhandler/404.jsp"
+      - "/libs/sling/servlet/errorhandler/default.jsp"
+      - "/libs/sling/servlet/errorhandler/.content.xml"
+      - "/libs/sling/servlet/errorhandler/_rep_policy.xml"
+      - "/libs/sling/servlet/default/feedentry.jsp"
+      - "/libs/sling/servlet/default/feed.jsp"
+      - "/libs/sling/servlet/default/.content.xml"
+      - "/libs/sling/nodetypes/sling.cnd"
+      headers:
+        Authorization: "Basic YWRtaW46YWRtaW4="
+        Cookie: ""
+    response:
+      header:
+        status: 200
+      body:
+        regex: "(?im)<sling([^>]+)>"

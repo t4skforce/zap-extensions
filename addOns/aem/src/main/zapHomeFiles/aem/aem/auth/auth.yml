@@ -1,0 +1,28 @@
+---
+- name: Default Credentials Used
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  users:
+    - username: "admin"
+      password: "admin"
+  auth:
+  - type: BASIC
+    url: /aem/start.html
+
+  - type: SELENIUM_FORM
+    url: /libs/granite/core/content/login.html
+    username: input[name=j_username]
+    password: input[name=j_username]
+    submit: button#submit-button
+
+  - type: FORM
+    url: /libs/granite/core/content/login.html/j_security_check
+    form:
+      method: POST
+      action: /libs/granite/core/content/login.html/j_security_check
+      fields:
+      - j_username: ${username}
+        j_password: ${password}
+        j_validate: true
+        _charset_: utf-8

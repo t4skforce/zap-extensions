@@ -1,0 +1,36 @@
+---
+- name: Apache Sling Interface reachable
+  alertId: 50027
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/libs/sling/servlet/errorhandler/404.jsp"
+      - "/libs/sling/servlet/errorhandler/default.jsp"
+      - "/libs/sling/servlet/errorhandler/.content.xml"
+      - "/libs/sling/servlet/errorhandler/_rep_policy.xml"
+      - "/libs/sling/servlet/default/feedentry.jsp"
+      - "/libs/sling/servlet/default/feed.jsp"
+      - "/libs/sling/servlet/default/.content.xml"
+      - "/libs/sling/nodetypes/sling.cnd"
+    response:
+      header:
+        status: 302
+        regex: "(?im)Location:\\s+.*?\\/libs\\/granite\\/core\\/content\\/login.html"
+  - request:
+      paths:
+      - "/libs/sling/topology/connector.2dbf051f-fc0d-40c7-b15b-9aaf24c28678.json"
+    response:
+      header:
+        status: 405
+      body:
+        css: title:contains(Error)
+  - request:
+      method: PUT
+      paths:
+      - "/libs/sling/topology/connector.2dbf051f-fc0d-40c7-b15b-9aaf24c28678.json"
+    response:
+      header:
+        status: 403

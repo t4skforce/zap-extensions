@@ -1,0 +1,90 @@
+---
+- name: CRXDE Management Interface reachable
+  alertId: 500232
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/crx/de/init.jsp"
+    response:
+      header:
+        json: true
+      body:
+        json: select(.contextPath | contains("crx")) | .contextPath
+  - request:
+      paths:
+      - "/crx/de/index.jsp"
+    response:
+      header:
+        html: true
+      body:
+        css: title:contains(CRXDE Lite)
+  - request:
+      paths:
+      - "/crx/de/welcome.jsp"
+    response:
+      header:
+        html: true
+      body:
+        css: h3:contains(Repository Information)
+  - request:
+      paths:
+      - "/crx/explorer/index.jsp"
+    response:
+      header:
+        html: true
+      body:
+        css: title:contains(Content Repository Extreme)
+  - request:
+      paths:
+      - "/crx/packmgr/index.jsp"
+      - "/crx/packageshare/login.html"
+    response:
+      header:
+        status: 302
+        regex: "(?im)Location:\\s+.*?\\/libs\\/granite\\/core\\/content\\/login.html"
+  - request:
+      paths:
+      - "/crx/repository/test"
+    response:
+      header:
+        status: 401
+        regex: "(?im)realm=\"Adobe CRX WebDAV\""
+  - request:
+      paths:
+      - "/crx/explorer/ui/search.jsp"
+    response:
+      body:
+        css: title:contains(Search)
+  - request:
+      paths:
+      - "/crx/explorer/ui/search_form.jsp"
+    response:
+      body:
+        css: form[action=search_form.jsp]
+  - request:
+      paths:
+      - "/crx/explorer/ui/search_results.jsp"
+    response:
+      header:
+        status: 500
+      body:
+        css: title:contains(Server Error)
+  - request:
+      paths:
+      - "/crx/explorer/ui/search_results.jsp"
+      query: "ck=1234567890&Name=null&Query=null"
+    response:
+      body:
+        regex: "(?im)java\\.util\\.NoSuchElementException"
+  - request:
+      paths:
+      - "/crx/server/"
+      - "/crx/server/crx.default/"
+    response:
+      header:
+        html: true
+      body:
+        css: title:contains(Apache Jackrabbit Oak)
