@@ -19,13 +19,19 @@
  */
 package org.zaproxy.zap.extension.fuzz.payloads.processor;
 
+import java.util.Collections;
+import java.util.Map;
+
+import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
+import org.zaproxy.zap.extension.fuzz.httpfuzzer.ProcessingException;
 import org.zaproxy.zap.extension.fuzz.payloads.DefaultPayload;
 import org.zaproxy.zap.extension.script.ExtensionScript;
 import org.zaproxy.zap.extension.script.ScriptWrapper;
 
 /**
- * A {@code DefaultPayloadProcessor} that delegates the processing of the value of a {@code
+ * A {@code DefaultPayloadProcessor} that delegates the processing of the value
+ * of a {@code
  * DefaultPayload} to a {@code DefaultPayloadProcessorScript}.
  *
  * @see DefaultPayload
@@ -34,80 +40,107 @@ import org.zaproxy.zap.extension.script.ScriptWrapper;
  */
 public class ScriptStringPayloadProcessorAdapter implements DefaultPayloadProcessor {
 
-    private final ScriptWrapper scriptWrapper;
-    private boolean initialised;
-    private ScriptStringPayloadProcessor scriptProcessor;
+	private final ScriptWrapper scriptWrapper;
+	private final Map<String, String> paramValues;
+	private boolean initialised;
+	private ScriptStringPayloadProcessor scriptProcessor;
 
-    public ScriptStringPayloadProcessorAdapter(ScriptWrapper scriptWrapper) {
-        if (scriptWrapper == null) {
-            throw new IllegalArgumentException("Parameter scriptWrapper must not be null.");
-        }
-        if (!ScriptStringPayloadProcessor.TYPE_NAME.equals(scriptWrapper.getTypeName())) {
-            throw new IllegalArgumentException(
-                    "Parameter scriptWrapper must wrap a script of type \""
-                            + ScriptStringPayloadProcessor.TYPE_NAME
-                            + "\".");
-        }
-        this.scriptWrapper = scriptWrapper;
-    }
+	public ScriptStringPayloadProcessorAdapter(ScriptWrapper scriptWrapper) {
+		validateScriptWrapper(scriptWrapper);
+		this.scriptWrapper = scriptWrapper;
+		paramValues = Collections.emptyMap();
+	}
 
-    @Override
-    public DefaultPayload process(DefaultPayload payload) throws PayloadProcessingException {
-        if (!initialised) {
-            initialise();
-            initialised = true;
-        }
+	private static void validateScriptWrapper(ScriptWrapper scriptWrapper) {
+		if (scriptWrapper == null) {
+			throw new IllegalArgumentException("Parameter scriptWrapper must not be null.");
+		}
+		if (!ScriptStringPayloadProcessor.TYPE_NAME.equals(scriptWrapper.getTypeName())) {
+			throw new IllegalArgumentException("Parameter scriptWrapper must wrap a script of type \""
+					+ ScriptStringPayloadProcessor.TYPE_NAME + "\".");
+		}
+	}
 
-        if (scriptProcessor == null) {
-            throw new PayloadProcessingException(
-                    "Script '"
-                            + scriptWrapper.getName()
-                            + "' does not implement the expected interface (ScriptStringPayloadProcessor).");
-        }
+	public ScriptStringPayloadProcessorAdapter(ScriptWrapper scriptWrapper, Map<String, String> paramValues) {
+		validateScriptWrapper(scriptWrapper);
+		if (paramValues == null) {
+			throw new IllegalArgumentException("Parameter paramValues must not be null.");
+		}
+		this.scriptWrapper = scriptWrapper;
+		this.paramValues = paramValues;
+	}
 
-        try {
-            String value = scriptProcessor.process(payload.getValue());
-            if (value != null) {
-                payload.setValue(value);
-            }
-        } catch (Exception e) {
-            // N.B. Catch exception (instead of ScriptException) since Nashorn throws
-            // RuntimeException.
-            // The same applies to all other script try-catch blocks.
-            // For example, when a variable or function is not defined it throws:
-            // jdk.nashorn.internal.runtime.ECMAException
-            handleScriptException(e);
-        }
-        return payload;
-    }
+	@Override
+	public DefaultPayload process(DefaultPayload payload) throws PayloadProcessingException {
+		initialiseIfNotInitialised();
 
-    private void initialise() throws PayloadProcessingException {
-        ExtensionScript extensionScript =
-                Control.getSingleton().getExtensionLoader().getExtension(ExtensionScript.class);
-        if (extensionScript != null) {
-            try {
-                scriptProcessor =
-                        extensionScript.getInterface(
-                                scriptWrapper, ScriptStringPayloadProcessor.class);
-            } catch (Exception e) {
-                handleScriptException(e);
-            }
-        }
-    }
+		try {
+			String value = scriptProcessor.process(payload.getValue(), paramValues);
+			if (value != null) {
+				payload.setValue(value);
+			}
+		} catch (Exception e) {
+			handleScriptException(e);
+		}
+		return payload;
+	}
 
-    private void handleScriptException(Exception cause) throws PayloadProcessingException {
-        ExtensionScript extensionScript =
-                Control.getSingleton().getExtensionLoader().getExtension(ExtensionScript.class);
-        if (extensionScript != null) {
-            extensionScript.setError(scriptWrapper, cause);
-            extensionScript.setEnabled(scriptWrapper, false);
-        }
+	private void initialiseIfNotInitialised() throws PayloadProcessingException {
+		if (!initialised) {
+			initialise();
+			initialised = true;
+		}
 
-        throw new PayloadProcessingException("Failed to process the payload:", cause);
-    }
+		if (scriptProcessor == null) {
+			throw new PayloadProcessingException("Script '" + scriptWrapper.getName()
+					+ "' does not implement the expected interface (ScriptStringPayloadProcessor).");
+		}
+	}
 
-    @Override
-    public PayloadProcessor<DefaultPayload> copy() {
-        return new ScriptStringPayloadProcessorAdapter(scriptWrapper);
-    }
+	private void initialise() throws PayloadProcessingException {
+		ExtensionScript extensionScript = Control.getSingleton()
+				.getExtensionLoader()
+				.getExtension(ExtensionScript.class);
+		if (extensionScript != null) {
+			try {
+				scriptProcessor = extensionScript.getInterface(scriptWrapper, ScriptStringPayloadProcessor.class);
+				if (scriptProcessor != null) {
+					validateRequiredParameters();
+				} else {
+					extensionScript.handleFailedScriptInterface(scriptWrapper,
+							Constant.messages.getString(
+									"fuzz.httpfuzzer.processor.scriptPayloadsProcessor.warnNoInterface.message",
+									scriptWrapper.getName()));
+				}
+			} catch (Exception e) {
+				handleScriptException(e);
+			}
+		}
+	}
+
+	private void validateRequiredParameters() throws ProcessingException {
+		for (String requiredParamName : scriptProcessor.getRequiredParamsNames()) {
+			String value = paramValues.get(requiredParamName);
+			if (value == null || value.trim().isEmpty()) {
+				throw new ProcessingException("Required parameter '" + requiredParamName + "' was not provided.");
+			}
+		}
+	}
+
+	private void handleScriptException(Exception cause) throws PayloadProcessingException {
+		ExtensionScript extensionScript = Control.getSingleton()
+				.getExtensionLoader()
+				.getExtension(ExtensionScript.class);
+		if (extensionScript != null) {
+			extensionScript.setError(scriptWrapper, cause);
+			extensionScript.setEnabled(scriptWrapper, false);
+		}
+
+		throw new PayloadProcessingException("Failed to process the payload:", cause);
+	}
+
+	@Override
+	public PayloadProcessor<DefaultPayload> copy() {
+		return new ScriptStringPayloadProcessorAdapter(scriptWrapper);
+	}
 }

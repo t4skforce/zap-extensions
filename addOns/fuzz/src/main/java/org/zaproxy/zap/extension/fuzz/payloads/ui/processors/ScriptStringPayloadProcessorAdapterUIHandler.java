@@ -19,16 +19,22 @@
  */
 package org.zaproxy.zap.extension.fuzz.payloads.ui.processors;
 
+import java.awt.event.ItemEvent;
 import java.util.List;
+import java.util.Map;
+
 import javax.swing.GroupLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+
 import org.apache.log4j.Logger;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
 import org.zaproxy.zap.extension.fuzz.ScriptUIEntry;
+import org.zaproxy.zap.extension.fuzz.httpfuzzer.processors.HttpFuzzerProcessorScript;
 import org.zaproxy.zap.extension.fuzz.payloads.DefaultPayload;
 import org.zaproxy.zap.extension.fuzz.payloads.processor.ScriptStringPayloadProcessor;
 import org.zaproxy.zap.extension.fuzz.payloads.processor.ScriptStringPayloadProcessorAdapter;
@@ -36,231 +42,272 @@ import org.zaproxy.zap.extension.fuzz.payloads.ui.processors.ScriptStringPayload
 import org.zaproxy.zap.extension.script.ExtensionScript;
 import org.zaproxy.zap.extension.script.ScriptWrapper;
 import org.zaproxy.zap.utils.SortedComboBoxModel;
+import org.zaproxy.zap.view.DynamicFieldsPanel;
 
-public class ScriptStringPayloadProcessorAdapterUIHandler
-        implements PayloadProcessorUIHandler<
-                DefaultPayload,
-                ScriptStringPayloadProcessorAdapter,
-                ScriptStringPayloadProcessorAdapterUI> {
+public class ScriptStringPayloadProcessorAdapterUIHandler implements
+		PayloadProcessorUIHandler<DefaultPayload, ScriptStringPayloadProcessorAdapter, ScriptStringPayloadProcessorAdapterUI> {
 
-    private static final Logger LOGGER =
-            Logger.getLogger(ScriptStringPayloadProcessorAdapterUIHandler.class);
+	private static final Logger LOG = Logger.getLogger(ScriptStringPayloadProcessorAdapterUIHandler.class);
 
-    private static final String PROCESSOR_NAME =
-            Constant.messages.getString("fuzz.payload.processor.script.name");
+	private static final String PROCESSOR_NAME = Constant.messages.getString("fuzz.payload.processor.script.name");
 
-    private final ExtensionScript extensionScript;
+	private final ExtensionScript extensionScript;
 
-    public ScriptStringPayloadProcessorAdapterUIHandler(ExtensionScript extensionScript) {
-        this.extensionScript = extensionScript;
-    }
+	public ScriptStringPayloadProcessorAdapterUIHandler(ExtensionScript extensionScript) {
+		this.extensionScript = extensionScript;
+	}
 
-    @Override
-    public String getName() {
-        return PROCESSOR_NAME;
-    }
+	@Override
+	public String getName() {
+		return PROCESSOR_NAME;
+	}
 
-    @Override
-    public Class<ScriptStringPayloadProcessorAdapterUI> getPayloadProcessorUIClass() {
-        return ScriptStringPayloadProcessorAdapterUI.class;
-    }
+	@Override
+	public Class<ScriptStringPayloadProcessorAdapterUI> getPayloadProcessorUIClass() {
+		return ScriptStringPayloadProcessorAdapterUI.class;
+	}
 
-    @Override
-    public Class<ScriptStringPayloadProcessorAdapterUIPanel> getPayloadProcessorUIPanelClass() {
-        return ScriptStringPayloadProcessorAdapterUIPanel.class;
-    }
+	@Override
+	public Class<ScriptStringPayloadProcessorAdapterUIPanel> getPayloadProcessorUIPanelClass() {
+		return ScriptStringPayloadProcessorAdapterUIPanel.class;
+	}
 
-    @Override
-    public ScriptStringPayloadProcessorAdapterUIPanel createPanel() {
-        return new ScriptStringPayloadProcessorAdapterUIPanel(
-                extensionScript.getScripts(ScriptStringPayloadProcessor.TYPE_NAME));
-    }
+	@Override
+	public ScriptStringPayloadProcessorAdapterUIPanel createPanel() {
+		return new ScriptStringPayloadProcessorAdapterUIPanel(
+				extensionScript.getScripts(ScriptStringPayloadProcessor.TYPE_NAME));
+	}
 
-    public static class ScriptStringPayloadProcessorAdapterUI
-            implements PayloadProcessorUI<DefaultPayload, ScriptStringPayloadProcessorAdapter> {
+	public static class ScriptStringPayloadProcessorAdapterUI
+			implements PayloadProcessorUI<DefaultPayload, ScriptStringPayloadProcessorAdapter> {
 
-        private final ScriptWrapper scriptWrapper;
+		private final ScriptWrapper scriptWrapper;
+		private final Map<String, String> paramsValues;
 
-        public ScriptStringPayloadProcessorAdapterUI(ScriptWrapper scriptWrapper) {
-            this.scriptWrapper = scriptWrapper;
-        }
+		public ScriptStringPayloadProcessorAdapterUI(ScriptWrapper scriptWrapper, Map<String, String> paramsValues) {
+			this.scriptWrapper = scriptWrapper;
+			this.paramsValues = paramsValues;
+		}
 
-        public ScriptWrapper getScriptWrapper() {
-            return scriptWrapper;
-        }
+		public ScriptWrapper getScriptWrapper() {
+			return scriptWrapper;
+		}
 
-        @Override
-        public Class<ScriptStringPayloadProcessorAdapter> getPayloadProcessorClass() {
-            return ScriptStringPayloadProcessorAdapter.class;
-        }
+		public Map<String, String> getParamsValues() {
+			return paramsValues;
+		}
 
-        @Override
-        public String getName() {
-            return PROCESSOR_NAME;
-        }
+		@Override
+		public Class<ScriptStringPayloadProcessorAdapter> getPayloadProcessorClass() {
+			return ScriptStringPayloadProcessorAdapter.class;
+		}
 
-        @Override
-        public boolean isMutable() {
-            return true;
-        }
+		@Override
+		public String getName() {
+			return PROCESSOR_NAME;
+		}
 
-        @Override
-        public String getDescription() {
-            return scriptWrapper.getName();
-        }
+		@Override
+		public boolean isMutable() {
+			return true;
+		}
 
-        @Override
-        public ScriptStringPayloadProcessorAdapter getPayloadProcessor() {
-            return new ScriptStringPayloadProcessorAdapter(scriptWrapper);
-        }
+		@Override
+		public String getDescription() {
+			return scriptWrapper.getName();
+		}
 
-        @Override
-        public ScriptStringPayloadProcessorAdapterUI copy() {
-            return this;
-        }
-    }
+		@Override
+		public ScriptStringPayloadProcessorAdapter getPayloadProcessor() {
+			return new ScriptStringPayloadProcessorAdapter(scriptWrapper, paramsValues);
+		}
 
-    public static class ScriptStringPayloadProcessorAdapterUIPanel
-            extends AbstractProcessorUIPanel<
-                    DefaultPayload,
-                    ScriptStringPayloadProcessorAdapter,
-                    ScriptStringPayloadProcessorAdapterUI> {
+		@Override
+		public ScriptStringPayloadProcessorAdapterUI copy() {
+			return this;
+		}
+	}
 
-        private static final String SCRIPT_FIELD_LABEL =
-                Constant.messages.getString("fuzz.payload.processor.script.script.label");
+	public static class ScriptStringPayloadProcessorAdapterUIPanel extends
+			AbstractProcessorUIPanel<DefaultPayload, ScriptStringPayloadProcessorAdapter, ScriptStringPayloadProcessorAdapterUI> {
 
-        private final JPanel fieldsPanel;
-        private final JComboBox<ScriptUIEntry> scriptComboBox;
+		private static final String SCRIPT_FIELD_LABEL = Constant.messages
+				.getString("fuzz.payload.processor.script.script.label");
 
-        public ScriptStringPayloadProcessorAdapterUIPanel(List<ScriptWrapper> scriptWrappers) {
-            scriptComboBox = new JComboBox<>(new SortedComboBoxModel<ScriptUIEntry>());
-            for (ScriptWrapper scriptWrapper : scriptWrappers) {
-                if (scriptWrapper.isEnabled()) {
-                    scriptComboBox.addItem(new ScriptUIEntry(scriptWrapper));
-                }
-            }
+		private final JPanel fieldsPanel;
+		private final JComboBox<ScriptUIEntry> scriptComboBox;
+		private DynamicFieldsPanel scriptParametersPanel;
 
-            fieldsPanel = new JPanel();
+		public ScriptStringPayloadProcessorAdapterUIPanel(List<ScriptWrapper> scriptWrappers) {
+			scriptComboBox = new JComboBox<>(new SortedComboBoxModel<ScriptUIEntry>());
+			addScriptsToScriptComboBox(scriptWrappers);
+			scriptComboBox.addItemListener(e -> {
+				if (e.getStateChange() == ItemEvent.SELECTED) {
+					updateScriptParametersPanel((ScriptStringPayloadProcessorScriptUIEntry) e.getItem());
+				}
+			});
+			scriptParametersPanel = new DynamicFieldsPanel(HttpFuzzerProcessorScript.EMPTY_PARAMS);
+			fieldsPanel = new JPanel();
+			setupFieldsPanel();
+		}
 
-            GroupLayout layout = new GroupLayout(fieldsPanel);
-            fieldsPanel.setLayout(layout);
-            layout.setAutoCreateGaps(true);
+		private void addScriptsToScriptComboBox(List<ScriptWrapper> scriptWrappers) {
+			for (ScriptWrapper scriptWrapper : scriptWrappers) {
+				if (scriptWrapper.isEnabled()) {
+					scriptComboBox.addItem(new ScriptStringPayloadProcessorScriptUIEntry(scriptWrapper));
+				}
+			}
+			scriptComboBox.setSelectedIndex(-1);
+		}
 
-            JLabel scriptLabel = new JLabel(SCRIPT_FIELD_LABEL);
-            scriptLabel.setLabelFor(scriptComboBox);
+		private void setupFieldsPanel() {
+			GroupLayout layout = new GroupLayout(fieldsPanel);
+			fieldsPanel.setLayout(layout);
+			layout.setAutoCreateGaps(true);
 
-            layout.setHorizontalGroup(
-                    layout.createSequentialGroup()
-                            .addComponent(scriptLabel)
-                            .addComponent(scriptComboBox));
+			JLabel scriptLabel = new JLabel(SCRIPT_FIELD_LABEL);
+			scriptLabel.setLabelFor(scriptComboBox);
 
-            layout.setVerticalGroup(
-                    layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                            .addComponent(scriptLabel)
-                            .addComponent(scriptComboBox));
-        }
+			JScrollPane parametersScrollPane = new JScrollPane(scriptParametersPanel);
 
-        @Override
-        public JPanel getComponent() {
-            return fieldsPanel;
-        }
+			layout.setHorizontalGroup(layout.createParallelGroup()
+					.addGroup(layout.createSequentialGroup().addComponent(scriptLabel).addComponent(scriptComboBox))
+					.addComponent(parametersScrollPane));
 
-        @Override
-        public void setPayloadProcessorUI(
-                ScriptStringPayloadProcessorAdapterUI payloadProcessorUI) {
-            scriptComboBox.setSelectedItem(
-                    new ScriptUIEntry(payloadProcessorUI.getScriptWrapper()));
-        }
+			layout.setVerticalGroup(layout.createSequentialGroup()
+					.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+							.addComponent(scriptLabel)
+							.addComponent(scriptComboBox))
+					.addComponent(parametersScrollPane));
+		}
 
-        @Override
-        public ScriptStringPayloadProcessorAdapterUI getPayloadProcessorUI() {
-            return new ScriptStringPayloadProcessorAdapterUI(
-                    ((ScriptUIEntry) scriptComboBox.getSelectedItem()).getScriptWrapper());
-        }
+		private void updateScriptParametersPanel(ScriptStringPayloadProcessorScriptUIEntry scriptUIEntry) {
+			String[] requiredParameters = HttpFuzzerProcessorScript.EMPTY_PARAMS;
+			String[] optionalParameters = HttpFuzzerProcessorScript.EMPTY_PARAMS;
 
-        @Override
-        public boolean validate() {
-            if (scriptComboBox.getSelectedIndex() == -1) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        Constant.messages.getString(
-                                "fuzz.payload.processor.script.warnNoScript.message"),
-                        Constant.messages.getString(
-                                "fuzz.payload.processor.script.warnNoScript.title"),
-                        JOptionPane.INFORMATION_MESSAGE);
-                scriptComboBox.requestFocusInWindow();
-                return false;
-            }
+			if (scriptUIEntry != null) {
+				try {
+					if (!scriptUIEntry.isDataLoaded()) {
+						ScriptStringPayloadProcessor script = initialiseImpl(scriptUIEntry.getScriptWrapper());
+						scriptUIEntry.setParameters(script.getRequiredParamsNames(), script.getOptionalParamsNames());
+					}
+					requiredParameters = scriptUIEntry.getRequiredParameters();
+					optionalParameters = scriptUIEntry.getOptionalParameters();
+				} catch (Exception ex) {
+					LOG.error(ex.getMessage(), ex);
+					scriptComboBox.setSelectedIndex(-1);
+					scriptComboBox.removeItem(scriptUIEntry);
+					showValidationMessageDialog(
+							Constant.messages.getString("fuzz.payload.processor.script.warnNoInterface.message"),
+							Constant.messages.getString("fuzz.payload.processor.script.warnNoInterface.title"));
+				}
+			}
 
-            ScriptUIEntry scriptUIEntry = ((ScriptUIEntry) scriptComboBox.getSelectedItem());
-            ScriptWrapper scriptWrapper = scriptUIEntry.getScriptWrapper();
-            try {
-                ScriptStringPayloadProcessor scriptPayloadGenerator = initialiseImpl(scriptWrapper);
-                if (scriptPayloadGenerator == null) {
-                    JOptionPane.showMessageDialog(
-                            null,
-                            Constant.messages.getString(
-                                    "fuzz.payload.processor.script.warnNoInterface.message"),
-                            Constant.messages.getString(
-                                    "fuzz.payload.processor.script.warnNoInterface.title"),
-                            JOptionPane.INFORMATION_MESSAGE);
-                    handleScriptExceptionImpl(
-                            scriptWrapper,
-                            Constant.messages.getString(
-                                    "fuzz.payload.processor.script.warnNoInterface.message"));
-                    return false;
-                }
-            } catch (Exception e) {
-                handleScriptExceptionImpl(scriptWrapper, e);
-                JOptionPane.showMessageDialog(
-                        null,
-                        Constant.messages.getString(
-                                "fuzz.payload.processor.script.warnNoInterface.message"),
-                        Constant.messages.getString(
-                                "fuzz.payload.processor.script.warnNoInterface.title"),
-                        JOptionPane.INFORMATION_MESSAGE);
-                LOGGER.warn(
-                        "Failed to validate '" + scriptWrapper.getName() + "': " + e.getMessage());
-                return false;
-            }
-            return true;
-        }
+			scriptParametersPanel.setFields(requiredParameters, optionalParameters);
 
-        @Override
-        public ScriptStringPayloadProcessorAdapter getPayloadProcessor() {
-            if (!validate()) {
-                return null;
-            }
-            return new ScriptStringPayloadProcessorAdapter(
-                    ((ScriptUIEntry) scriptComboBox.getSelectedItem()).getScriptWrapper());
-        }
-    }
+			fieldsPanel.revalidate();
+			fieldsPanel.repaint();
+		}
 
-    private static ScriptStringPayloadProcessor initialiseImpl(ScriptWrapper scriptWrapper)
-            throws Exception {
-        ExtensionScript extensionScript =
-                Control.getSingleton().getExtensionLoader().getExtension(ExtensionScript.class);
-        if (extensionScript != null) {
-            return extensionScript.getInterface(scriptWrapper, ScriptStringPayloadProcessor.class);
-        }
-        return null;
-    }
+		@Override
+		public JPanel getComponent() {
+			return fieldsPanel;
+		}
 
-    private static void handleScriptExceptionImpl(ScriptWrapper scriptWrapper, Exception cause) {
-        ExtensionScript extensionScript =
-                Control.getSingleton().getExtensionLoader().getExtension(ExtensionScript.class);
-        if (extensionScript != null) {
-            extensionScript.setError(scriptWrapper, cause);
-            extensionScript.setEnabled(scriptWrapper, false);
-        }
-    }
+		@Override
+		public void setPayloadProcessorUI(ScriptStringPayloadProcessorAdapterUI payloadProcessorUI) {
+			scriptComboBox.setSelectedItem(new ScriptUIEntry(payloadProcessorUI.getScriptWrapper()));
+			scriptParametersPanel.bindFieldValues(payloadProcessorUI.paramsValues);
+		}
 
-    private static void handleScriptExceptionImpl(ScriptWrapper scriptWrapper, String error) {
-        ExtensionScript extensionScript =
-                Control.getSingleton().getExtensionLoader().getExtension(ExtensionScript.class);
-        if (extensionScript != null) {
-            extensionScript.setError(scriptWrapper, error);
-            extensionScript.setEnabled(scriptWrapper, false);
-        }
-    }
+		@Override
+		public ScriptStringPayloadProcessorAdapterUI getPayloadProcessorUI() {
+			ScriptStringPayloadProcessorScriptUIEntry entry = (ScriptStringPayloadProcessorScriptUIEntry) scriptComboBox
+					.getSelectedItem();
+			return new ScriptStringPayloadProcessorAdapterUI(entry.getScriptWrapper(),
+					scriptParametersPanel.getFieldValues());
+		}
+
+		@Override
+		public ScriptStringPayloadProcessorAdapter getPayloadProcessor() {
+			if (!validate()) {
+				return null;
+			}
+			ScriptStringPayloadProcessorScriptUIEntry entry = (ScriptStringPayloadProcessorScriptUIEntry) scriptComboBox
+					.getSelectedItem();
+			return new ScriptStringPayloadProcessorAdapter(entry.getScriptWrapper(),
+					scriptParametersPanel.getFieldValues());
+		}
+
+		@Override
+		public void clear() {
+			scriptComboBox.setSelectedIndex(-1);
+			scriptParametersPanel.clearFields();
+		}
+
+		@Override
+		public boolean validate() {
+			if (scriptComboBox.getSelectedIndex() == -1) {
+				showValidationMessageDialog(
+						Constant.messages
+								.getString("fuzz.httpfuzzer.processor.scriptProcessor.panel.warnNoScript.message"),
+						Constant.messages
+								.getString("fuzz.httpfuzzer.processor.scriptProcessor.panel.warnNoScript.title"));
+				return false;
+			}
+
+			try {
+				scriptParametersPanel.validateFields();
+			} catch (IllegalStateException ex) {
+				showValidationMessageDialog(ex.getMessage(),
+						Constant.messages.getString("fuzz.payload.processor.script.panel.warn.title"));
+				return false;
+			}
+			return true;
+		}
+
+		private void showValidationMessageDialog(Object message, String title) {
+			JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
+			scriptComboBox.requestFocusInWindow();
+		}
+
+		private static class ScriptStringPayloadProcessorScriptUIEntry extends ScriptUIEntry {
+
+			private String[] requiredParameters;
+			private String[] optionalParameters;
+			private boolean dataLoaded;
+
+			public ScriptStringPayloadProcessorScriptUIEntry(ScriptWrapper scriptWrapper) {
+				super(scriptWrapper);
+			}
+
+			public boolean isDataLoaded() {
+				return dataLoaded;
+			}
+
+			public void setParameters(String[] requiredParameters, String[] optionalParameters) {
+				this.requiredParameters = requiredParameters;
+				this.optionalParameters = optionalParameters;
+				dataLoaded = true;
+			}
+
+			public String[] getRequiredParameters() {
+				return requiredParameters;
+			}
+
+			public String[] getOptionalParameters() {
+				return optionalParameters;
+			}
+		}
+	}
+
+	private static ScriptStringPayloadProcessor initialiseImpl(ScriptWrapper scriptWrapper) throws Exception {
+		ExtensionScript extensionScript = Control.getSingleton()
+				.getExtensionLoader()
+				.getExtension(ExtensionScript.class);
+		if (extensionScript != null) {
+			return extensionScript.getInterface(scriptWrapper, ScriptStringPayloadProcessor.class);
+		}
+		return null;
+	}
 }

@@ -19,6 +19,8 @@
  */
 package org.zaproxy.zap.extension.fuzz.payloads.processor;
 
+import java.util.Map;
+
 import javax.script.ScriptException;
 
 /**
@@ -30,15 +32,42 @@ import javax.script.ScriptException;
  */
 public interface ScriptStringPayloadProcessor {
 
-    /** The name used to identify the type of this script, for example, in configurations. */
-    static final String TYPE_NAME = "payloadprocessor";
+	/**
+	 * The name used to identify the type of this script, for example, in
+	 * configurations.
+	 */
+	String TYPE_NAME = "payloadprocessor";
 
-    /**
-     * Returns the result of processing the given {@code payloadValue}.
-     *
-     * @param payloadValue the value of the payload that will be processed
-     * @return the result of processing the value of the payload, never {@code null}.
-     * @throws ScriptException if an error occurs while executing the script
-     */
-    String process(String payloadValue) throws ScriptException;
+	String[] EMPTY_PARAMS = new String[0];
+
+	/**
+	 * Returns the result of processing the given {@code payloadValue}.
+	 *
+	 * @param payloadValue the value of the payload that will be processed
+	 * @param params       parameters passed to script
+	 * @return the result of processing the value of the payload, never
+	 *         {@code null}.
+	 * @throws ScriptException if an error occurs while executing the script
+	 */
+	default String process(String payloadValue, Map<String, String> params) throws ScriptException {
+		return process(payloadValue);
+	}
+
+	/**
+	 * Returns the result of processing the given {@code payloadValue}.
+	 *
+	 * @param payloadValue the value of the payload that will be processed
+	 * @return the result of processing the value of the payload, never
+	 *         {@code null}.
+	 * @throws ScriptException if an error occurs while executing the script
+	 */
+	String process(String payloadValue) throws ScriptException;
+
+	default String[] getRequiredParamsNames() {
+		return EMPTY_PARAMS;
+	}
+
+	default String[] getOptionalParamsNames() {
+		return EMPTY_PARAMS;
+	}
 }
