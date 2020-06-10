@@ -194,7 +194,7 @@ public class ScriptStringPayloadProcessorAdapterUIHandler implements
 					requiredParameters = scriptUIEntry.getRequiredParameters();
 					optionalParameters = scriptUIEntry.getOptionalParameters();
 				} catch (Exception ex) {
-					LOG.error(ex.getMessage(), ex);
+					handleScriptException(scriptUIEntry.getScriptWrapper(), ex);
 					scriptComboBox.setSelectedIndex(-1);
 					scriptComboBox.removeItem(scriptUIEntry);
 					showValidationMessageDialog(
@@ -269,6 +269,16 @@ public class ScriptStringPayloadProcessorAdapterUIHandler implements
 		private void showValidationMessageDialog(Object message, String title) {
 			JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
 			scriptComboBox.requestFocusInWindow();
+		}
+
+		private void handleScriptException(ScriptWrapper scriptWrapper, Exception cause) {
+			ExtensionScript extensionScript = Control.getSingleton()
+					.getExtensionLoader()
+					.getExtension(ExtensionScript.class);
+			if (extensionScript != null) {
+				extensionScript.setError(scriptWrapper, cause);
+				extensionScript.setEnabled(scriptWrapper, false);
+			}
 		}
 
 		private static class ScriptStringPayloadProcessorScriptUIEntry extends ScriptUIEntry {
