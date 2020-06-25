@@ -19,32 +19,24 @@
  */
 package org.zaproxy.zap.extension.aem.checks;
 
-import java.io.IOException;
-import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
-import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Category;
 import org.parosproxy.paros.network.HttpMessage;
 import org.parosproxy.paros.network.HttpResponseHeader;
 import org.zaproxy.zap.extension.aem.base.AbstractHostScan;
-import org.zaproxy.zap.extension.aem.util.HistoryUtil;
 import org.zaproxy.zap.extension.aem.util.HttpMessageWrapperUtil;
-import org.zaproxy.zap.network.HttpResponseBody;
+import org.zaproxy.zap.extension.aem.util.fuzzer.HttpRequestFuzzBuilder;
 
-public class AdobeConfidential extends AbstractHostScan {
-	private static final String JCR_REPOSITORY = "JCR repository";
+public class DefaultGetServlet extends AbstractHostScan {
 
-	private static final String ADOBE_CONFIDENTIAL = "ADOBE CONFIDENTIAL";
-
-	private static final String MESSAGE_PREFIX = "aem.static.files";
-
-	public static final int ID = 5001;
+	public static final int ID = 5004;
+	private static final String MESSAGE_PREFIX = "aem.get.servlet";
+	private static final List<String> PATHS = Arrays.asList("/", "/etc", "/var", "/apps", "/home");
 
 	@Override
 	public int getId() {
@@ -69,57 +61,39 @@ public class AdobeConfidential extends AbstractHostScan {
 	}
 
 	@Override
-	public int getRisk() {
-		return Alert.RISK_INFO;
-	}
-
-	@Override
 	public String getMessagePrefix() {
 		return MESSAGE_PREFIX;
 	}
 
-	private List<String> getPaths() throws IOException {
-		AttackStrength strength = getAttackStrength();
-		List<String> paths = FileUtils
-				.readLines(Paths.get(Constant.getZapHome(), "aem").resolve("adobeConfidential.txt").toFile(), "UTF-8");
-
-		if (AttackStrength.LOW.equals(strength)) {
-			paths = ListUtils.partition(paths, 36).get(0);
-		} else if (AttackStrength.MEDIUM.equals(strength)) {
-			paths = ListUtils.partition(paths, 72).get(0);
-		} else if (AttackStrength.HIGH.equals(strength)) {
-			paths = ListUtils.partition(paths, 288).get(0);
-		}
-
-		return paths;
+	@Override
+	public int getRisk() {
+		return Alert.RISK_MEDIUM;
 	}
 
 	@Override
 	public void doScan(HttpMessage baseMessage) throws Exception {
-		getPaths().stream()
+		PATHS.stream()
 				.map(path -> HttpMessageWrapperUtil.get(getBaseMsg(), path).orElse(null))
 				.filter(Objects::nonNull)
+				.map(origin -> HttpRequestFuzzBuilder.builder(origin)
+						.setFileExtension(".children")
+						.setFileExtension(".json")
+						.stream())
+				.flatMap(Function.identity())
+				.map(origin -> fuzzDispatcher(origin))
+				.flatMap(Function.identity())
 				.filter(sendAndReceive(msg -> {
 					HttpResponseHeader header = msg.getResponseHeader();
 					int statusCode = header.getStatusCode();
-					if (header.getStatusCode() == 200 && header.isText()) {
-						HttpResponseBody body = msg.getResponseBody();
-						String bodyStr = body.toString();
-						if (StringUtils.containsIgnoreCase(bodyStr, ADOBE_CONFIDENTIAL)) {
-							msg.setNote(ADOBE_CONFIDENTIAL);
-							return true;
-						} else if (StringUtils.containsIgnoreCase(bodyStr, JCR_REPOSITORY)) {
-							msg.setNote(JCR_REPOSITORY);
-							return true;
-						}
-					} else if (statusCode >= 500) {
-						// this could be interesting for passive rules
-						HistoryUtil.addForPassiveScan(msg, "error");
+					if (statusCode == 200) {
+						return true;
 					}
 					return false;
 				}, false))
-				.forEach(msg -> {
-					newAlert().setEvidence(msg.getNote()).setMessage(msg).setRisk(Alert.RISK_INFO).raise();
+				.findFirst()
+				.ifPresent(msg -> {
+
 				});
 	}
+
 }
