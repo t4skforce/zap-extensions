@@ -1,12 +1,12 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "30"
+version = "34"
 description = "The release quality Passive Scanner rules"
 
 zapAddOn {
     addOnName.set("Passive scanner rules")
     addOnStatus.set(AddOnStatus.RELEASE)
-    zapVersion.set("2.9.0")
+    zapVersion.set("2.10.0")
 
     manifest {
         author.set("ZAP Dev Team")
@@ -48,6 +48,6 @@ dependencies {
 
 spotless {
     javaWith3rdPartyFormatted(project, listOf(
-        "**/TestInfoPrivateAddressDisclosure.java",
-        "**/TestInfoSessionIdURL.java"))
+        "**/InfoPrivateAddressDisclosureScanRule.java",
+        "**/InfoSessionIdUrlScanRule.java"))
 }

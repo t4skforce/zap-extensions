@@ -466,7 +466,7 @@ public class ExtensionWavsepReport extends ExtensionAdaptor {
 
             pw.println("<html><head><title>ZAP Wavsep Report</title></head><body>");
             pw.println(
-                    "<h1><img src=\"https://raw.githubusercontent.com/zaproxy/zaproxy/develop/zap/src/main/resources/resource/zap64x64.png\" align=\"middle\">OWASP ZAP wavsep results</h1>");
+                    "<h1><img src=\"https://raw.githubusercontent.com/zaproxy/zaproxy/main/zap/src/main/resources/resource/zap64x64.png\" align=\"middle\">OWASP ZAP wavsep results</h1>");
             pw.println("Generated TBA");
             pw.println("<h3>Total Score " + passRate + "%</h3>");
             pw.println("<br/>");
@@ -499,11 +499,6 @@ public class ExtensionWavsepReport extends ExtensionAdaptor {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
-    }
-
-    @Override
-    public String getAuthor() {
-        return Constant.ZAP_TEAM;
     }
 
     @Override

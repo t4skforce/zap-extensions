@@ -183,6 +183,18 @@ public class ExtensionCustomReport extends ExtensionAdaptor {
         return alertDetailstab.wascid();
     }
 
+    public boolean attack() {
+        return alertDetailstab.attack();
+    }
+
+    public boolean param() {
+        return alertDetailstab.param();
+    }
+
+    public boolean evidence() {
+        return alertDetailstab.evidence();
+    }
+
     public boolean requestHeader() {
         return alertDetailstab.requestHeader();
     }
@@ -197,11 +209,6 @@ public class ExtensionCustomReport extends ExtensionAdaptor {
 
     public boolean responseBody() {
         return alertDetailstab.responseBody();
-    }
-
-    @Override
-    public String getAuthor() {
-        return "\n Author: Chienli Ma";
     }
 
     void dialogClosed() {

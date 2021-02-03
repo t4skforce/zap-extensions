@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 
+## [33] - 2021-01-29
+### Added
+- Added Express error string pattern (Issue 6412).
+
+### Changed
+- X-Frame-Options (XFO) scan rule no longer suggests the use of "ALLOW-FROM", and also includes CSP "frame-ancestors" as an alternative.
+  - XFO headers implementing "ALLOW-FROM" will now be considered malformed.
+- The Suspicious Comments scan rule will raise one alert per pattern per page and use more suitable evidence.
+
+## [32] - 2021-01-20
+### Changed
+- The Suspicious Comments scan rule will include the offending line as evidence.
+- The Suspicious Comments scan rule will raise one alert per finding, instead of one aggeregated alert per HTTP message.
+
+## [31] - 2020-12-15
+### Changed
+- Now targeting ZAP 2.10.
+- The following scan rules now support Custom Page definitions:
+  - Application Error
+  - Cache Control
+  - X-Content-Type-Options
+  - X-Frame-Options
+
+## [30] - 2020-11-26
+### Changed
+- The CSP scan rule now checks if the form-action directive allows wildcards.
+- The CSP scan rule now includes further information in the description of allowed wildcard directives alerts when the impacted directive is one (or more) which doesn't fallback to default-src.
+- Maintenance changes.
+- Changed ViewState and XFrameOption rules to return example alerts for the docs.
+- Handle an IllegalArgumentException that could occur in the CSP scan rule if multiple CSP headers were present and one (or more) had a report-uri directive when trying to merge them.
+- Allow to ignore cookies in same site and loosely scoped scan rules.
+- The Application Error scan rule will not alert on web assembly responses.
+
 ## [29] - 2020-06-01
 ### Changed
 - Updated owasp.org references (Issue 5962).
@@ -191,6 +224,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 
+[33]: https://github.com/zaproxy/zap-extensions/releases/pscanrules-v33
+[32]: https://github.com/zaproxy/zap-extensions/releases/pscanrules-v32
+[31]: https://github.com/zaproxy/zap-extensions/releases/pscanrules-v31
+[30]: https://github.com/zaproxy/zap-extensions/releases/pscanrules-v30
 [29]: https://github.com/zaproxy/zap-extensions/releases/pscanrules-v29
 [28]: https://github.com/zaproxy/zap-extensions/releases/pscanrules-v28
 [27]: https://github.com/zaproxy/zap-extensions/releases/pscanrules-v27

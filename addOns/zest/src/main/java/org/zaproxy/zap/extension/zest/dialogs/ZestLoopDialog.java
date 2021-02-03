@@ -29,24 +29,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.swing.JFileChooser;
 import org.apache.log4j.Logger;
-import org.mozilla.zest.core.v1.ZestLoop;
-import org.mozilla.zest.core.v1.ZestLoopClientElements;
-import org.mozilla.zest.core.v1.ZestLoopFile;
-import org.mozilla.zest.core.v1.ZestLoopInteger;
-import org.mozilla.zest.core.v1.ZestLoopRegex;
-import org.mozilla.zest.core.v1.ZestLoopString;
-import org.mozilla.zest.core.v1.ZestLoopTokenFileSet;
-import org.mozilla.zest.core.v1.ZestLoopTokenIntegerSet;
-import org.mozilla.zest.core.v1.ZestLoopTokenStringSet;
-import org.mozilla.zest.core.v1.ZestScript;
-import org.mozilla.zest.core.v1.ZestStatement;
 import org.parosproxy.paros.Constant;
 import org.zaproxy.zap.extension.script.ScriptNode;
 import org.zaproxy.zap.extension.zest.ExtensionZest;
 import org.zaproxy.zap.extension.zest.ZestScriptWrapper;
 import org.zaproxy.zap.extension.zest.ZestZapUtils;
 import org.zaproxy.zap.view.StandardFieldsDialog;
+import org.zaproxy.zest.core.v1.ZestLoop;
+import org.zaproxy.zest.core.v1.ZestLoopClientElements;
+import org.zaproxy.zest.core.v1.ZestLoopFile;
+import org.zaproxy.zest.core.v1.ZestLoopInteger;
+import org.zaproxy.zest.core.v1.ZestLoopRegex;
+import org.zaproxy.zest.core.v1.ZestLoopString;
+import org.zaproxy.zest.core.v1.ZestLoopTokenFileSet;
+import org.zaproxy.zest.core.v1.ZestLoopTokenIntegerSet;
+import org.zaproxy.zest.core.v1.ZestLoopTokenStringSet;
+import org.zaproxy.zest.core.v1.ZestScript;
+import org.zaproxy.zest.core.v1.ZestStatement;
 
 public class ZestLoopDialog extends StandardFieldsDialog implements ZestDialog {
     private static final long serialVersionUID = 3720969585202318312L;
@@ -150,8 +151,7 @@ public class ZestLoopDialog extends StandardFieldsDialog implements ZestDialog {
                         .getFuzzerDelegate()
                         .getFuzzersForCategory(this.getStringValue(CATEGORY_FUZZ)),
                 "");
-        // TODO replace with a file selector when one is available
-        this.addTextField(FILE_PATH, path);
+        this.addFileSelectField(FILE_PATH, new File(path), JFileChooser.FILES_ONLY, null);
         this.addFieldListener(
                 CATEGORY_FUZZ,
                 new ActionListener() {

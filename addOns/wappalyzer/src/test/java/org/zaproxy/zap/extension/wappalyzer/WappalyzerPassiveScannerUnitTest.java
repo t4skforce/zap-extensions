@@ -47,7 +47,7 @@ public class WappalyzerPassiveScannerUnitTest
             try {
                 defaultHolder = new WappalyzerApplicationTestHolder();
                 WappalyzerJsonParser parser = new WappalyzerJsonParser();
-                WappalyzerData result = parser.parseDefaultAppsJson();
+                WappalyzerData result = parser.parseAppsJson("apps.json");
                 defaultHolder.setApplications(result.getApplications());
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -82,18 +82,90 @@ public class WappalyzerPassiveScannerUnitTest
     }
 
     @Test
-    public void testModernizr() throws HttpMalformedHeaderException {
+    public void shouldMatchScriptElement() throws HttpMalformedHeaderException {
+        // Given
         HttpMessage msg = makeHttpMessage();
-
         msg.setResponseBody(
                 "<html>"
                         + "<script type='text/javascript' src='libs/modernizr.min.js?ver=4.1.1'>"
                         + "</script>"
                         + "</html>");
+        // When
         scan(msg);
-
+        // Then
         assertFoundAppCount("https://www.example.com", 1);
         assertFoundApp("https://www.example.com", "Modernizr");
+    }
+
+    @Test
+    public void shouldNotMatchScriptElementContentIfNotOnScriptElement()
+            throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody("<html><body>libs/modernizr.min.js?ver=4.1.1</body></html>");
+        // When
+        scan(msg);
+        // Then
+        assertNull(getDefaultHolder().getAppsForSite("https://www.example.com"));
+    }
+
+    @Test
+    public void shouldMatchDomElementWithTextAndAttribute() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><body>"
+                        + "<a href=\"https://www.example.com\" title=\"version 1\" style=\"border: 5px groove rgb(244, 250, 88);\">Example</a>"
+                        + "</body></html>");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Test Entry");
+    }
+
+    @Test
+    public void shouldMatchDomElementWithOnlyText() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><body>"
+                        + "<a href=\"https://www.modern.com\"  style=\"border: 5px groove rgb(244, 250, 88);\">Modern</a>"
+                        + "</body></html>");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Modernizr");
+    }
+
+    @Test
+    public void shouldMatchDomElementWithOnlyAttribute() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><body>"
+                        + "<a href=\"https://www.apache.com\" title=\"version 1\" style=\"border: 5px groove rgb(244, 250, 88);\">Example</a>"
+                        + "</body></html>");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Apache");
+    }
+
+    @Test
+    public void shouldNotMatchDomElementIfNoContentMatches() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><body>"
+                        + "<a href=\"https://www.pinter.com\" title=\"version\" style=\"border: 5px groove rgb(244, 250, 88);\">Pinterest</a>"
+                        + "</body></html>");
+        // When
+        scan(msg);
+        // Then
+        assertNull(getDefaultHolder().getAppsForSite("https://www.example.com"));
     }
 
     @Test
@@ -126,6 +198,85 @@ public class WappalyzerPassiveScannerUnitTest
         assertFoundApp("https://www.example.com", "PHP"); // Implied
     }
 
+    @Test
+    public void shouldMatchOnCssResponseWhenContentMatches() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.getResponseHeader().setHeader(HttpResponseHeader.CONTENT_TYPE, "text/css");
+        msg.setResponseBody(".example {background-color: lightblue;}");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Test Entry");
+    }
+
+    @Test
+    public void shouldMatchOnCssRequestWhenContentMatches() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setRequestHeader("GET https://www.example.com/styles.css HTTP/1.1");
+        msg.setResponseBody(".example {background-color: lightblue;}");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Test Entry");
+    }
+
+    @Test
+    public void shouldMatchOnHtmlResponseWhenContentStyleMatches()
+            throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><head><style>.example {background-color: lightblue;}</style></head></html>");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Test Entry");
+    }
+
+    @Test
+    public void shouldNotMatchOnHtmlResponseWhenContentStyleDoesNotMatch()
+            throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><head><style>.TEST {background-color: lightblue;}</style></head></html>");
+        // When
+        scan(msg);
+        // Then
+        assertNotFound("https://www.example.com");
+    }
+
+    @Test
+    public void shouldMatchOnMetaTag() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><head><meta name=\"generator\" content=\"Apache\"></head></html>");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Apache");
+    }
+
+    @Test
+    public void shouldMatchOnMetaTagWithMultipleEntries() throws HttpMalformedHeaderException {
+        // Given
+        HttpMessage msg = makeHttpMessage();
+        msg.setResponseBody(
+                "<html><head><meta name=\"generator\" content=\"Generator 2\"></head></html>");
+        // When
+        scan(msg);
+        // Then
+        assertFoundAppCount("https://www.example.com", 1);
+        assertFoundApp("https://www.example.com", "Test Entry");
+    }
+
     private void scan(HttpMessage msg) {
         rule.scanHttpResponseReceive(msg, -1, this.createSource(msg));
     }
@@ -142,6 +293,11 @@ public class WappalyzerPassiveScannerUnitTest
         httpMessage.setResponseHeader("HTTP/1.1 200 OK");
         httpMessage.getResponseHeader().setHeader(HttpResponseHeader.CONTENT_TYPE, "text/html");
         return httpMessage;
+    }
+
+    private void assertNotFound(String site) {
+        List<ApplicationMatch> appsForSite = getDefaultHolder().getAppsForSite(site);
+        assertNull(appsForSite);
     }
 
     private void assertFoundAppCount(String site, int appCount) {

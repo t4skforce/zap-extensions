@@ -24,9 +24,9 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
-import java.awt.Toolkit;
 import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import javax.swing.Box;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -35,7 +35,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 import org.jdesktop.swingx.JXTable;
@@ -92,24 +91,17 @@ public class TechPanel extends AbstractPanel {
     public TechPanel(ExtensionWappalyzer extension) {
         super();
         this.extension = extension;
-        initialize();
-    }
-
-    @SuppressWarnings("deprecation")
-    private void initialize() {
         this.setLayout(new CardLayout());
         this.setSize(474, 251);
         this.setName(Constant.messages.getString("wappalyzer.panel.title"));
         this.setIcon(ExtensionWappalyzer.WAPPALYZER_ICON);
         this.setDefaultAccelerator(
-                KeyStroke.getKeyStroke(
-                        // TODO Remove warn suppression and use View.getMenuShortcutKeyStroke with
-                        // newer ZAP (or use getMenuShortcutKeyMaskEx() with Java 10+)
-                        KeyEvent.VK_T,
-                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()
-                                | KeyEvent.ALT_DOWN_MASK
-                                | KeyEvent.SHIFT_DOWN_MASK,
-                        false));
+                this.extension
+                        .getView()
+                        .getMenuShortcutKeyStroke(
+                                KeyEvent.VK_T,
+                                KeyEvent.ALT_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK,
+                                false));
         this.setMnemonic(Constant.messages.getChar("wappalyzer.panel.mnemonic"));
         this.add(getPanelCommand(), getPanelCommand().getName());
         this.getEnableToggleButton().setSelected(extension.isWappalyzerEnabled());
@@ -183,7 +175,25 @@ public class TechPanel extends AbstractPanel {
 
     protected JXTable getTechTable() {
         if (techTable == null) {
-            techTable = new JXTable(techModel);
+            techTable =
+                    new JXTable(techModel) {
+                        private static final long serialVersionUID = -5249686560976842645L;
+
+                        @Override
+                        public String getToolTipText(MouseEvent e) {
+                            String tip = "";
+                            int rowIndex = rowAtPoint(e.getPoint());
+
+                            if (rowIndex != -1) {
+                                tip =
+                                        techModel
+                                                .getApp(convertRowIndexToModel(rowIndex))
+                                                .getDescription();
+                            }
+
+                            return tip.isEmpty() ? null : tip;
+                        }
+                    };
 
             techTable.setColumnSelectionAllowed(false);
             techTable.setCellSelectionEnabled(false);

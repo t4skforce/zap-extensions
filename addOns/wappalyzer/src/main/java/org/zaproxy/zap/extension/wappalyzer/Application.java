@@ -27,6 +27,7 @@ import javax.swing.ImageIcon;
 public class Application {
 
     private String name;
+    private String description;
     private String website;
     private ImageIcon icon = null;
     private List<String> categories = new ArrayList<String>();
@@ -35,6 +36,8 @@ public class Application {
     private List<AppPattern> url = new ArrayList<AppPattern>();
     private List<AppPattern> html = new ArrayList<AppPattern>();
     private List<Map<String, AppPattern>> metas;
+    private List<Map<String, Map<String, Map<String, AppPattern>>>> dom;
+    private List<AppPattern> css = new ArrayList<AppPattern>();
     private List<AppPattern> script = new ArrayList<AppPattern>();
 
     private List<String> implies = new ArrayList<String>();
@@ -45,6 +48,14 @@ public class Application {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getWebsite() {
@@ -83,8 +94,16 @@ public class Application {
         this.html = html;
     }
 
+    public void setCss(List<AppPattern> css) {
+        this.css = css;
+    }
+
     public void setMetas(List<Map<String, AppPattern>> metas) {
         this.metas = metas;
+    }
+
+    public void setDom(List<Map<String, Map<String, Map<String, AppPattern>>>> dom) {
+        this.dom = dom;
     }
 
     public void setScript(List<AppPattern> script) {
@@ -129,6 +148,18 @@ public class Application {
 
     public void addMetas(Map<String, AppPattern> meta) {
         this.metas.add(meta);
+    }
+
+    public List<Map<String, Map<String, Map<String, AppPattern>>>> getDom() {
+        return dom;
+    }
+
+    public List<AppPattern> getCss() {
+        return css;
+    }
+
+    public void addMCss(AppPattern css) {
+        this.css.add(css);
     }
 
     public List<AppPattern> getScript() {

@@ -22,11 +22,16 @@ package org.zaproxy.zap.extension.wappalyzer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import net.htmlparser.jericho.Element;
 import net.htmlparser.jericho.HTMLElementName;
 import net.htmlparser.jericho.Source;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.model.HistoryReference;
 import org.parosproxy.paros.model.SiteNode;
@@ -37,7 +42,7 @@ import org.zaproxy.zap.extension.pscan.PluginPassiveScanner;
 
 public class WappalyzerPassiveScanner implements PassiveScanner {
 
-    private static final Logger LOGGER = Logger.getLogger(WappalyzerPassiveScanner.class);
+    private static final Logger LOGGER = LogManager.getLogger(WappalyzerPassiveScanner.class);
     private WappalyzerApplicationHolder applicationHolder;
     private Set<String> visitedSiteIdentifiers = new HashSet<>();
     private ApplicationMatch appMatch;
@@ -73,18 +78,14 @@ public class WappalyzerPassiveScanner implements PassiveScanner {
             checkAppMatches(msg, source);
             if (appMatch != null) {
                 String site = ExtensionWappalyzer.normalizeSite(msg.getRequestHeader().getURI());
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Adding " + app.getName() + " to " + site);
-                }
+                LOGGER.debug("Adding {} to {}", app.getName(), site);
                 addApplicationsToSite(site, appMatch);
                 this.appMatch = null;
             }
             this.currentApp = null;
         }
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Analyse took " + (System.currentTimeMillis() - startTime) + "ms");
-        }
+        LOGGER.debug("Analysis took {} ms", System.currentTimeMillis() - startTime);
     }
 
     private String getSiteIdentifier(HttpMessage msg) {
@@ -122,13 +123,31 @@ public class WappalyzerPassiveScanner implements PassiveScanner {
         }
         checkBodyMatches(msg);
         checkMetaElementsMatches(source);
-        checkScriptMatches(msg);
+        checkScriptElementsMatches(source);
+        checkCssElementsMatches(msg, source);
+        checkDomElementMatches(msg);
     }
 
-    private void checkScriptMatches(HttpMessage msg) {
-        String body = msg.getResponseBody().toString();
-        for (AppPattern p : currentApp.getScript()) {
-            addIfMatches(p, body);
+    private void checkCssElementsMatches(HttpMessage msg, Source source) {
+        for (AppPattern appPattern : currentApp.getCss()) {
+            if (msg.getRequestHeader().isCss() || msg.getResponseHeader().isCss()) {
+                addIfMatches(appPattern, msg.getResponseBody().toString());
+            } else {
+                for (Element styleElement : source.getAllElements(HTMLElementName.STYLE)) {
+                    addIfMatches(appPattern, styleElement.getSource().toString());
+                }
+            }
+        }
+    }
+
+    private void checkScriptElementsMatches(Source source) {
+        for (Element scriptElement : source.getAllElements(HTMLElementName.SCRIPT)) {
+            for (AppPattern appPattern : currentApp.getScript()) {
+                String src = scriptElement.getAttributeValue("src");
+                if (src != null && !src.isEmpty()) {
+                    addIfMatches(appPattern, src);
+                }
+            }
         }
     }
 
@@ -142,6 +161,35 @@ public class WappalyzerPassiveScanner implements PassiveScanner {
                     if (name != null && content != null && name.equals(entry.getKey())) {
                         AppPattern p = entry.getValue();
                         addIfMatches(p, content);
+                    }
+                }
+            }
+        }
+    }
+
+    private void checkDomElementMatches(HttpMessage message) {
+        Document doc = Jsoup.parse(message.getResponseBody().toString());
+        for (Map<String, Map<String, Map<String, AppPattern>>> domSelectorMap :
+                currentApp.getDom()) {
+            for (Map.Entry<String, Map<String, Map<String, AppPattern>>> selectorMap :
+                    domSelectorMap.entrySet()) {
+                for (Map.Entry<String, Map<String, AppPattern>> nodeSelectorMap :
+                        selectorMap.getValue().entrySet()) {
+                    for (Map.Entry<String, AppPattern> value :
+                            nodeSelectorMap.getValue().entrySet()) {
+                        Elements selectedElements = doc.select(selectorMap.getKey());
+                        for (org.jsoup.nodes.Element selectedElement : selectedElements) {
+                            if (Objects.equals(value.getKey(), "text")) {
+                                AppPattern ap = value.getValue();
+                                addIfMatches(ap, selectedElement.text());
+                            }
+                            if (Objects.equals(nodeSelectorMap.getKey(), "attributes")) {
+                                AppPattern ap = value.getValue();
+                                if (selectedElement.hasAttr(value.getKey())) {
+                                    addIfMatches(ap, selectedElement.attr(value.getKey()));
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -181,10 +229,8 @@ public class WappalyzerPassiveScanner implements PassiveScanner {
             // TODO may need to account for the wappalyzer spec in dealing with version info:
             // https://www.wappalyzer.com/docs/specification
             results.forEach(appMatch::addVersion);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(
-                        appPattern.getType() + " matched " + appMatch.getApplication().getName());
-            }
+            LOGGER.debug(
+                    "{} matched {}", appPattern.getType(), appMatch.getApplication().getName());
         }
     }
 

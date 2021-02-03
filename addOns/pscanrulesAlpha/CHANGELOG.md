@@ -4,8 +4,26 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+
+### Changed
+- Now targeting ZAP 2.10.
+- The In Page Banner Information Leak scan rule and Site Isolation scan rule now support Custom Page definitions.
+- Update links to zaproxy repo.
+
+## [29] - 2020-11-16
+
+### Added
+ - Add rule for Site Isolation (CORP/COEP/COOP).
+
 ### Changed
 - Maintenance changes.
+
+## [28] - 2020-08-13
+### Changed
+- Maintenance changes.
+
+### Fixed
+- Fixed bug where Sub Resource Integrity Attribute Missing scan rule alerts even when HTML asset is inline (Issue 6047).
 
 ## [27] - 2020-06-01
 ### Added
@@ -235,6 +253,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Updated User Controlled Open Redirect, Cookie and Charset rules after testing with
 - http://www.testcases.org/watcher/ test pages.
 
+[29]: https://github.com/zaproxy/zap-extensions/releases/pscanrulesAlpha-v29
+[28]: https://github.com/zaproxy/zap-extensions/releases/pscanrulesAlpha-v28
 [27]: https://github.com/zaproxy/zap-extensions/releases/pscanrulesAlpha-v27
 [26]: https://github.com/zaproxy/zap-extensions/releases/pscanrulesAlpha-v26
 [25]: https://github.com/zaproxy/zap-extensions/releases/pscanrulesAlpha-v25

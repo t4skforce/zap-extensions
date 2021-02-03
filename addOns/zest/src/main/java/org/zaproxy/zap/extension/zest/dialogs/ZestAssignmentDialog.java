@@ -27,25 +27,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.mozilla.zest.core.v1.ZestAssignCalc;
-import org.mozilla.zest.core.v1.ZestAssignFieldValue;
-import org.mozilla.zest.core.v1.ZestAssignFromElement;
-import org.mozilla.zest.core.v1.ZestAssignGlobalVariable;
-import org.mozilla.zest.core.v1.ZestAssignRandomInteger;
-import org.mozilla.zest.core.v1.ZestAssignRegexDelimiters;
-import org.mozilla.zest.core.v1.ZestAssignReplace;
-import org.mozilla.zest.core.v1.ZestAssignString;
-import org.mozilla.zest.core.v1.ZestAssignStringDelimiters;
-import org.mozilla.zest.core.v1.ZestAssignment;
-import org.mozilla.zest.core.v1.ZestFieldDefinition;
-import org.mozilla.zest.core.v1.ZestRequest;
-import org.mozilla.zest.core.v1.ZestStatement;
 import org.parosproxy.paros.Constant;
 import org.zaproxy.zap.extension.script.ScriptNode;
 import org.zaproxy.zap.extension.zest.ExtensionZest;
 import org.zaproxy.zap.extension.zest.ZestScriptWrapper;
 import org.zaproxy.zap.extension.zest.ZestZapUtils;
 import org.zaproxy.zap.view.StandardFieldsDialog;
+import org.zaproxy.zest.core.v1.ZestAssignCalc;
+import org.zaproxy.zest.core.v1.ZestAssignFieldValue;
+import org.zaproxy.zest.core.v1.ZestAssignFromElement;
+import org.zaproxy.zest.core.v1.ZestAssignGlobalVariable;
+import org.zaproxy.zest.core.v1.ZestAssignRandomInteger;
+import org.zaproxy.zest.core.v1.ZestAssignRegexDelimiters;
+import org.zaproxy.zest.core.v1.ZestAssignReplace;
+import org.zaproxy.zest.core.v1.ZestAssignString;
+import org.zaproxy.zest.core.v1.ZestAssignStringDelimiters;
+import org.zaproxy.zest.core.v1.ZestAssignment;
+import org.zaproxy.zest.core.v1.ZestFieldDefinition;
+import org.zaproxy.zest.core.v1.ZestRequest;
+import org.zaproxy.zest.core.v1.ZestStatement;
 
 public class ZestAssignmentDialog extends StandardFieldsDialog implements ZestDialog {
 
@@ -269,7 +269,7 @@ public class ZestAssignmentDialog extends StandardFieldsDialog implements ZestDi
     private void initElementsSelector() {
         String value = this.getStringValue(FIELD_FROM_ELEMENT_FILTERED_ELEMENTS_SELECTOR);
         getField(FIELD_FROM_ELEMENT_FILTERED_ELEMENTS_SELECTOR_ATTRIBUTE_NAME)
-                .setEnabled(value == FROM_ELEMENT_SELECTOR_ATTRIBUTE);
+                .setEnabled(FROM_ELEMENT_SELECTOR_ATTRIBUTE.equals(value));
     }
 
     private void addFieldListenerToSetEnabledOnCheckedChanged(
@@ -303,7 +303,7 @@ public class ZestAssignmentDialog extends StandardFieldsDialog implements ZestDi
         if (stmt instanceof ZestRequest) {
             ZestRequest req = (ZestRequest) stmt;
             if (stmt != null && req.getResponse() != null) {
-                List<String> forms = org.mozilla.zest.impl.ZestUtils.getForms(req.getResponse());
+                List<String> forms = org.zaproxy.zest.impl.ZestUtils.getForms(req.getResponse());
                 for (String form : forms) {
                     list.add(form);
                 }
@@ -326,7 +326,7 @@ public class ZestAssignmentDialog extends StandardFieldsDialog implements ZestDi
                 ZestRequest req = (ZestRequest) stmt;
                 if (stmt != null && req.getResponse() != null) {
                     List<String> fields =
-                            org.mozilla.zest.impl.ZestUtils.getFields(req.getResponse(), formIndex);
+                            org.zaproxy.zest.impl.ZestUtils.getFields(req.getResponse(), formIndex);
                     this.setComboFields(FIELD_REPLACE_FIELD, fields, value);
                 }
             }
@@ -402,9 +402,9 @@ public class ZestAssignmentDialog extends StandardFieldsDialog implements ZestDi
             za.atIndex(index, reverse);
 
             String value = this.getStringValue(FIELD_FROM_ELEMENT_FILTERED_ELEMENTS_SELECTOR);
-            if (value == FROM_ELEMENT_SELECTOR_CONTENT) {
+            if (FROM_ELEMENT_SELECTOR_CONTENT.equals(value)) {
                 za.selectContent();
-            } else if (value == FROM_ELEMENT_SELECTOR_ATTRIBUTE) {
+            } else if (FROM_ELEMENT_SELECTOR_ATTRIBUTE.equals(value)) {
                 String attributeName =
                         getStringValue(
                                 FIELD_FROM_ELEMENT_FILTERED_ELEMENTS_SELECTOR_ATTRIBUTE_NAME);
@@ -526,7 +526,7 @@ public class ZestAssignmentDialog extends StandardFieldsDialog implements ZestDi
             }
 
             String value = this.getStringValue(FIELD_FROM_ELEMENT_FILTERED_ELEMENTS_SELECTOR);
-            if (value == FROM_ELEMENT_SELECTOR_ATTRIBUTE
+            if (FROM_ELEMENT_SELECTOR_ATTRIBUTE.equals(value)
                     && this.isEmptyField(
                             FIELD_FROM_ELEMENT_FILTERED_ELEMENTS_SELECTOR_ATTRIBUTE_NAME)) {
                 return Constant.messages.getString(

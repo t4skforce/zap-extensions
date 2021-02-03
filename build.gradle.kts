@@ -1,9 +1,10 @@
 plugins {
     id("com.diffplug.gradle.spotless")
     id("com.github.ben-manes.versions") version "0.27.0"
+    id("org.sonarqube") version "3.0"
 }
 
-apply(from = "$rootDir/gradle/travis-ci.gradle.kts")
+apply(from = "$rootDir/gradle/ci.gradle.kts")
 apply(from = "$rootDir/gradle/lgtm.gradle.kts")
 
 allprojects {
@@ -34,5 +35,13 @@ allprojects {
 
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
+    }
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "zaproxy_zap-extensions")
+        property("sonar.organization", "zaproxy")
+        property("sonar.host.url", "https://sonarcloud.io")
     }
 }

@@ -19,7 +19,7 @@
  */
 package org.zaproxy.zap.extension.pscanrulesAlpha;
 
-import java.io.IOException;
+import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -29,7 +29,6 @@ import org.apache.log4j.Logger;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Plugin.AlertThreshold;
-import org.parosproxy.paros.extension.encoder.Base64;
 import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.zap.extension.pscan.PassiveScanThread;
 import org.zaproxy.zap.extension.pscan.PluginPassiveScanner;
@@ -59,7 +58,7 @@ public class Base64Disclosure extends PluginPassiveScanner {
         // base64Patterns.add(Pattern.compile("[a-zA-Z0-9\\-_]{30,}={0,2}"));  //used in JWT - file
         // and URL safe variant of Base64 alphabet
         base64Patterns.add(Pattern.compile("[a-zA-Z0-9\\+\\\\/\\-_]{30,}={0,2}"));
-    };
+    }
 
     /**
      * patterns used to identify strings withut each of the given character sets which is used to
@@ -79,22 +78,11 @@ public class Base64Disclosure extends PluginPassiveScanner {
     /** Prefix for internationalized messages used by this rule */
     private static final String MESSAGE_PREFIX = "pscanalpha.base64disclosure.";
 
-    /**
-     * gets the name of the scanner
-     *
-     * @return
-     */
     @Override
     public String getName() {
         return Constant.messages.getString(MESSAGE_PREFIX + "name");
     }
 
-    /**
-     * scans the HTTP request sent (in fact, does nothing)
-     *
-     * @param msg
-     * @param id
-     */
     @Override
     public void scanHttpRequestSend(HttpMessage msg, int id) {
         // TODO: implement checks for base64 encoding in the request?
@@ -136,8 +124,8 @@ public class Base64Disclosure extends PluginPassiveScanner {
                         tempbase64evidence = tempbase64evidence.replace('_', '/');
 
                         // decode the data
-                        decodeddata = Base64.decode(tempbase64evidence);
-                    } catch (IOException e) {
+                        decodeddata = Base64.getDecoder().decode(tempbase64evidence);
+                    } catch (IllegalArgumentException e) {
                         // it's not actually Base64. so skip it.
                         if (log.isDebugEnabled())
                             log.debug(
@@ -394,60 +382,28 @@ public class Base64Disclosure extends PluginPassiveScanner {
         }
     }
 
-    /**
-     * sets the parent
-     *
-     * @param parent
-     */
     @Override
     public void setParent(PassiveScanThread parent) {
         // Nothing to do.
     }
 
-    /**
-     * get the id of the scanner
-     *
-     * @return
-     */
     @Override
     public int getPluginId() {
         return 10094;
     }
 
-    /**
-     * get the description of the alert
-     *
-     * @return
-     */
     private String getDescription() {
         return Constant.messages.getString(MESSAGE_PREFIX + "desc");
     }
 
-    /**
-     * get the solution for the alert
-     *
-     * @return
-     */
     private String getSolution() {
         return Constant.messages.getString(MESSAGE_PREFIX + "soln");
     }
 
-    /**
-     * gets references for the alert
-     *
-     * @return
-     */
     private String getReference() {
         return Constant.messages.getString(MESSAGE_PREFIX + "refs");
     }
 
-    /**
-     * gets extra information associated with the alert
-     *
-     * @param msg
-     * @param arg0
-     * @return
-     */
     private String getExtraInfo(HttpMessage msg, String evidence, byte[] decodeddata) {
         return Constant.messages.getString(
                 MESSAGE_PREFIX + "extrainfo", evidence, new String(decodeddata));

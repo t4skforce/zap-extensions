@@ -26,6 +26,7 @@
 // ZAP: 2015/11/16 Issue 1804: Disable processing of XML external entities by default
 // ZAP: 2015/11/16 Issue 1555: Rework inclusion of HTML tags in reports
 // ZAP: 2019/05/08 Normalise format/indentation.
+// ZAP: 2020/10/29 Issue 6267: Fix bug to allow writing reports with file path containing '#'.
 package org.zaproxy.zap.extension.customreport;
 
 import java.io.BufferedReader;
@@ -81,7 +82,7 @@ public class ReportGenerator {
             Transformer transformer = tFactory.newTransformer(stylesource);
 
             // Make the transformation and write to the output file
-            StreamResult result = new StreamResult(outFile);
+            StreamResult result = new StreamResult(outFile.getPath());
             transformer.transform(source, result);
 
         } catch (TransformerException e) {
@@ -116,7 +117,7 @@ public class ReportGenerator {
                 Transformer transformer = tFactory.newTransformer(stylesource);
 
                 DOMSource source = new DOMSource(doc);
-                StreamResult result = new StreamResult(outfile);
+                StreamResult result = new StreamResult(outfile.getPath());
                 transformer.transform(source, result);
 
             } catch (TransformerException
@@ -147,13 +148,10 @@ public class ReportGenerator {
             // Replace the escaped tags used to make the report look slightly better.
             // This is a temp fix to ensure reports always get generated
             // we should really adopt something other than XSLT ;)
-            BufferedReader br = null;
-            BufferedWriter bw = null;
             String line;
 
-            try {
-                br = new BufferedReader(new FileReader(tempOutfilename));
-                bw = new BufferedWriter(new FileWriter(outfilename));
+            try (BufferedReader br = new BufferedReader(new FileReader(tempOutfilename));
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(outfilename))) {
 
                 while ((line = br.readLine()) != null) {
                     bw.write(line.replace("&lt;p&gt;", "<p>").replace("&lt;/p&gt;", "</p>"));
@@ -162,35 +160,15 @@ public class ReportGenerator {
 
             } catch (IOException e) {
                 logger.error(e.getMessage(), e);
-            } finally {
-                try {
-                    if (br != null) {
-                        br.close();
-                    }
-                    if (bw != null) {
-                        bw.close();
-                    }
-                } catch (IOException ex) {
-                }
             }
             // Remove the temporary file
             outfile.delete();
         } else {
             // No XSLT file specified, just output the XML straight to the file
-            BufferedWriter bw = null;
-
-            try {
-                bw = new BufferedWriter(new FileWriter(outfilename));
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(outfilename))) {
                 bw.write(inxml);
             } catch (IOException e2) {
                 logger.error(e2.getMessage(), e2);
-            } finally {
-                try {
-                    if (bw != null) {
-                        bw.close();
-                    }
-                } catch (IOException ex) {
-                }
             }
         }
 
@@ -261,7 +239,7 @@ public class ReportGenerator {
             Transformer transformer = tFactory.newTransformer(stylesource);
 
             DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(outfile);
+            StreamResult result = new StreamResult(outfile.getPath());
             transformer.transform(source, result);
 
         } catch (TransformerException

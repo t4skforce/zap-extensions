@@ -28,9 +28,11 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.ImageIcon;
 import net.sf.json.JSONArray;
@@ -45,7 +47,8 @@ import org.apache.batik.bridge.UserAgentAdapter;
 import org.apache.batik.ext.awt.RenderingHintsKeyExt;
 import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.util.XMLResourceDescriptor;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.svg.SVGDocument;
 
 public class WappalyzerJsonParser {
@@ -54,19 +57,32 @@ public class WappalyzerJsonParser {
     private static final String FIELD_VERSION = "version:";
     private static final int SIZE = 16;
 
-    private static final Logger logger = Logger.getLogger(WappalyzerJsonParser.class);
-    private PatternErrorHandler patternErrorHandler;
+    private static final Logger logger = LogManager.getLogger(WappalyzerJsonParser.class);
+    private final PatternErrorHandler patternErrorHandler;
+    private final ParsingExceptionHandler parsingExceptionHandler;
 
     public WappalyzerJsonParser() {
-        patternErrorHandler = (pattern, e) -> logger.error("Invalid pattern syntax " + pattern, e);
+        this(
+                (pattern, e) -> logger.error("Invalid pattern syntax {}", pattern, e),
+                e -> logger.error(e.getMessage(), e));
     }
 
-    public WappalyzerJsonParser(PatternErrorHandler peh) {
+    WappalyzerJsonParser(PatternErrorHandler peh, ParsingExceptionHandler parsingExceptionHandler) {
         this.patternErrorHandler = peh;
+        this.parsingExceptionHandler = parsingExceptionHandler;
     }
 
     public WappalyzerData parseDefaultAppsJson() throws IOException {
         return parseJson(getStringResource(ExtensionWappalyzer.RESOURCE + "/apps.json"));
+    }
+
+    WappalyzerData parseAppsJson(String path) {
+        try {
+            return parseJson(getStringResource(path));
+        } catch (IOException e) {
+            logger.warn("An error occurred reading the file: {}", path);
+        }
+        return null;
     }
 
     private static String getStringResource(String resourceName) throws IOException {
@@ -106,7 +122,7 @@ public class WappalyzerJsonParser {
                 result.addCategory(mCat.getKey(), mCat.getValue().getString("name"));
             }
 
-            JSONObject apps = json.getJSONObject("apps");
+            JSONObject apps = json.getJSONObject("technologies");
             for (Object entry : apps.entrySet()) {
                 Map.Entry<String, JSONObject> mApp = (Map.Entry<String, JSONObject>) entry;
 
@@ -115,14 +131,17 @@ public class WappalyzerJsonParser {
 
                 Application app = new Application();
                 app.setName(appName);
+                app.setDescription(appData.optString("description"));
                 app.setWebsite(appData.getString("website"));
                 app.setCategories(
                         this.jsonToCategoryList(result.getCategories(), appData.get("cats")));
                 app.setHeaders(this.jsonToAppPatternMapList("HEADER", appData.get("headers")));
                 app.setUrl(this.jsonToPatternList("URL", appData.get("url")));
                 app.setHtml(this.jsonToPatternList("HTML", appData.get("html")));
-                app.setScript(this.jsonToPatternList("SCRIPT", appData.get("script")));
+                app.setScript(this.jsonToPatternList("SCRIPT", appData.get("scripts")));
                 app.setMetas(this.jsonToAppPatternMapList("META", appData.get("meta")));
+                app.setCss(this.jsonToPatternList("CSS", appData.get("css")));
+                app.setDom(this.jsonToAppPatternNestedMapList("DOM", appData.get("dom")));
                 app.setImplies(this.jsonToStringList(appData.get("implies")));
                 app.setCpe(appData.optString("cpe"));
 
@@ -142,7 +161,7 @@ public class WappalyzerJsonParser {
             }
 
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            parsingExceptionHandler.handleException(e);
         }
 
         return result;
@@ -196,7 +215,7 @@ public class WappalyzerJsonParser {
         try {
             svgIcon = builder.build(new BridgeContext(userAgent, loader), doc);
         } catch (BridgeException | StringIndexOutOfBoundsException ex) {
-            logger.debug("Failed to parse SVG. " + ex.getMessage());
+            logger.debug("Failed to parse SVG. {}", ex.getMessage());
             return null;
         }
 
@@ -229,7 +248,7 @@ public class WappalyzerJsonParser {
                 if (category != null) {
                     list.add(category);
                 } else {
-                    logger.error("Failed to find category for " + obj.toString());
+                    logger.error("Failed to find category for {}", obj.toString());
                 }
             }
         }
@@ -239,23 +258,109 @@ public class WappalyzerJsonParser {
     @SuppressWarnings("unchecked")
     private List<Map<String, AppPattern>> jsonToAppPatternMapList(String type, Object json) {
         List<Map<String, AppPattern>> list = new ArrayList<Map<String, AppPattern>>();
-        AppPattern ap;
         if (json instanceof JSONObject) {
             for (Object obj : ((JSONObject) json).entrySet()) {
-                Map.Entry<String, String> entry = (Map.Entry<String, String>) obj;
+                Map.Entry<String, Object> entry = (Map.Entry<String, Object>) obj;
                 try {
-                    Map<String, AppPattern> map = new HashMap<String, AppPattern>();
-                    ap = this.strToAppPattern(type, entry.getValue());
-                    map.put(entry.getKey(), ap);
-                    list.add(map);
+                    Object value = entry.getValue();
+                    if (value instanceof String) {
+                        list.add(createMapAppPattern(type, entry.getKey(), (String) value));
+                    } else if (value instanceof JSONArray) {
+                        JSONArray values = (JSONArray) value;
+                        for (Object val : values) {
+                            list.add(createMapAppPattern(type, entry.getKey(), (String) val));
+                        }
+                    } else {
+                        parsingExceptionHandler.handleException(
+                                new Exception("Unsupported type: " + value.getClass()));
+                    }
                 } catch (NumberFormatException e) {
                     logger.error(
-                            "Invalid field syntax " + entry.getKey() + " : " + entry.getValue(), e);
+                            "Invalid field syntax {} : {}", entry.getKey(), entry.getValue(), e);
                 } catch (PatternSyntaxException e) {
-                    patternErrorHandler.handleError(entry.getValue(), e);
+                    patternErrorHandler.handleError(String.valueOf(entry.getValue()), e);
                 }
             }
         } else if (json != null) {
+            logger.error(
+                    "Unexpected header type for {} {}",
+                    json.toString(),
+                    json.getClass().getCanonicalName());
+        }
+        return list;
+    }
+
+    private Map<String, AppPattern> createMapAppPattern(String type, String key, String value) {
+        Map<String, AppPattern> map = new HashMap<>();
+        map.put(key, strToAppPattern(type, value));
+        return map;
+    }
+
+    private List<Map<String, Map<String, Map<String, AppPattern>>>> jsonToAppPatternNestedMapList(
+            String type, Object json) {
+        List<Map<String, Map<String, Map<String, AppPattern>>>> list = new ArrayList<>();
+        AppPattern appPat;
+        if (json == null) {
+            return Collections.emptyList();
+        }
+        if (json instanceof JSONObject) {
+            for (Object domSelectorObject : ((JSONObject) json).entrySet()) {
+                Map.Entry<?, ?> domEntryMap = (Map.Entry<?, ?>) domSelectorObject;
+                for (Object nodeSelectorObject : ((JSONObject) domEntryMap.getValue()).entrySet()) {
+                    Map.Entry<?, ?> nodeEntryMap = (Map.Entry<?, ?>) nodeSelectorObject;
+                    if (Objects.equals(nodeEntryMap.getKey(), "properties")) {
+                        continue;
+                    }
+                    if (((Map.Entry<?, ?>) nodeSelectorObject).getValue() instanceof JSONObject) {
+                        for (Object objvalue : ((JSONObject) nodeEntryMap.getValue()).entrySet()) {
+                            Map.Entry<?, ?> valueMap = (Map.Entry<?, ?>) objvalue;
+                            try {
+                                Map<String, Map<String, Map<String, AppPattern>>> domSelectorMap =
+                                        new HashMap<>();
+                                Map<String, Map<String, AppPattern>> nodeSelectorMap =
+                                        new HashMap<>();
+                                Map<String, AppPattern> value = new HashMap<>();
+                                appPat = this.strToAppPattern(type, (String) valueMap.getValue());
+                                value.put((String) valueMap.getKey(), appPat);
+                                nodeSelectorMap.put((String) nodeEntryMap.getKey(), value);
+                                domSelectorMap.put((String) domEntryMap.getKey(), nodeSelectorMap);
+                                list.add(domSelectorMap);
+                            } catch (NumberFormatException e) {
+                                logger.error(
+                                        "Invalid field syntax "
+                                                + valueMap.getKey()
+                                                + " : "
+                                                + valueMap.getValue(),
+                                        e);
+                            } catch (PatternSyntaxException e) {
+                                patternErrorHandler.handleError((String) valueMap.getValue(), e);
+                            }
+                        }
+                    } else {
+                        try {
+                            Map<String, Map<String, Map<String, AppPattern>>> domSelectorMap =
+                                    new HashMap<>();
+                            Map<String, Map<String, AppPattern>> nodeSelectorMap = new HashMap<>();
+                            Map<String, AppPattern> value = new HashMap<>();
+                            appPat = this.strToAppPattern(type, (String) nodeEntryMap.getValue());
+                            value.put((String) nodeEntryMap.getKey(), appPat);
+                            nodeSelectorMap.put((String) nodeEntryMap.getKey(), value);
+                            domSelectorMap.put((String) (domEntryMap).getKey(), nodeSelectorMap);
+                            list.add(domSelectorMap);
+                        } catch (NumberFormatException e) {
+                            logger.error(
+                                    "Invalid field syntax "
+                                            + nodeEntryMap.getKey()
+                                            + " : "
+                                            + nodeEntryMap.getValue(),
+                                    e);
+                        } catch (PatternSyntaxException e) {
+                            patternErrorHandler.handleError((String) nodeEntryMap.getValue(), e);
+                        }
+                    }
+                }
+            }
+        } else {
             logger.error(
                     "Unexpected header type for "
                             + json.toString()
@@ -308,17 +413,17 @@ public class WappalyzerJsonParser {
                 } else if (values[i].startsWith(FIELD_VERSION)) {
                     ap.setVersion(values[i].substring(FIELD_VERSION.length()));
                 } else {
-                    logger.error("Unexpected field: " + values[i]);
+                    logger.error("Unexpected field: {}", values[i]);
                 }
             } catch (Exception e) {
-                logger.error("Invalid field syntax " + values[i], e);
+                logger.error("Invalid field syntax {}", values[i], e);
             }
         }
         if (pattern.indexOf(FIELD_CONFIDENCE) > 0) {
-            logger.warn("Confidence field in pattern?: " + pattern);
+            logger.warn("Confidence field in pattern?: {}", pattern);
         }
         if (pattern.indexOf(FIELD_VERSION) > 0) {
-            logger.warn("Version field in pattern?: " + pattern);
+            logger.warn("Version field in pattern?: {}", pattern);
         }
         ap.setPattern(pattern);
         return ap;
@@ -329,5 +434,9 @@ public class WappalyzerJsonParser {
             return (int) Double.parseDouble(confidence) * 100;
         }
         return Integer.parseInt(confidence);
+    }
+
+    interface ParsingExceptionHandler {
+        void handleException(Exception e);
     }
 }

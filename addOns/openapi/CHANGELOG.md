@@ -4,7 +4,24 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+### Changed
+- Maintenance changes.
 
+## [17] - 2020-12-15
+### Added
+- Handle cookie parameters (Issue 6045).
+- Use default values in `x-www-form-urlencoded` and `json` bodies (Issue 6095).
+
+### Changed
+- Show import exceptions in the Output tab (Issue 6042).
+- Maintenance changes.
+- Update minimum ZAP version to 2.10.0.
+
+### Fixed
+- Add imported messages synchronously to the Sites tree (Issue 5936).
+- Correct parent dialogue when choosing the file to import (Issue 6041).
+- Properly handle no schema when generating the request body (Issue 6042).
+- Return API error `illegal_parameter` (instead of `internal_error`) when unable to get the OpenAPI definition from the provided URL.
 
 ## [16] - 2020-06-09
 ### Added
@@ -100,6 +117,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - First Version
 
+[17]: https://github.com/zaproxy/zap-extensions/releases/openapi-v17
 [16]: https://github.com/zaproxy/zap-extensions/releases/openapi-v16
 [15]: https://github.com/zaproxy/zap-extensions/releases/openapi-v15
 [14]: https://github.com/zaproxy/zap-extensions/releases/openapi-v14

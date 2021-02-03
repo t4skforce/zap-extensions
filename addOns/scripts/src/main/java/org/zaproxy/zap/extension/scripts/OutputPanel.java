@@ -20,7 +20,6 @@
 package org.zaproxy.zap.extension.scripts;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.EventQueue;
 import javax.script.ScriptException;
 import javax.swing.ImageIcon;
@@ -109,7 +108,7 @@ public class OutputPanel extends AbstractPanel {
                         @Override
                         public void actionPerformed(java.awt.event.ActionEvent e) {
                             getTxtOutput().setText("");
-                        };
+                        }
                     });
 
             final ZapToggleButton clearOnRunButton = new ZapToggleButton();
@@ -126,7 +125,7 @@ public class OutputPanel extends AbstractPanel {
                         @Override
                         public void actionPerformed(java.awt.event.ActionEvent e) {
                             clearOnRun = clearOnRunButton.isSelected();
-                        };
+                        }
                     });
 
             final ZapToggleButton scrollLockButton = new ZapToggleButton();
@@ -151,7 +150,7 @@ public class OutputPanel extends AbstractPanel {
                                 getTxtOutput()
                                         .setCaretPosition(getTxtOutput().getDocument().getLength());
                             }
-                        };
+                        }
                     });
 
             final ZapToggleButton scriptLockButton = new ZapToggleButton();
@@ -167,7 +166,7 @@ public class OutputPanel extends AbstractPanel {
                         @Override
                         public void actionPerformed(java.awt.event.ActionEvent e) {
                             extension.setLockOutputToDisplayedScript(scriptLockButton.isSelected());
-                        };
+                        }
                     });
 
             mainToolBar.add(clearButton);
@@ -217,7 +216,7 @@ public class OutputPanel extends AbstractPanel {
             return;
         }
         try {
-            EventQueue.invokeAndWait(
+            EventQueue.invokeLater(
                     new Runnable() {
                         @Override
                         public void run() {
@@ -274,7 +273,6 @@ public class OutputPanel extends AbstractPanel {
 
     public void clear() {
         getTxtOutput().setText("");
-        getTxtOutput().setForeground(Color.BLACK);
     }
 
     public boolean isEmpty() {

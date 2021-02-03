@@ -1,6 +1,6 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "0.1.0"
+version = "0.2.0"
 description = "Provides the GraalVM JavaScript engine for ZAP scripting."
 
 zapAddOn {
@@ -23,7 +23,10 @@ zapAddOn {
 }
 
 dependencies {
-    val graalJsVersion = "19.3.1"
+    val graalJsVersion = "20.2.0"
     implementation("org.graalvm.js:js:$graalJsVersion")
     implementation("org.graalvm.js:js-scriptengine:$graalJsVersion")
+    implementation("org.javadelight:delight-graaljs-sandbox:0.1.2")
+
+    testImplementation(project(":testutils"))
 }

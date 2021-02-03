@@ -1,6 +1,6 @@
 import org.zaproxy.gradle.addon.AddOnStatus
 
-version = "17"
+version = "18"
 description = "Imports and spiders OpenAPI definitions."
 
 zapAddOn {
@@ -11,6 +11,7 @@ zapAddOn {
     manifest {
         author.set("ZAP Dev Team plus Joanna Bona, Nathalie Bouchahine, Artur Grzesica, Mohammad Kamar, Markus Kiss, Michal Materniak, Marcin Spiewak, and SDA SE Open Industry Solutions")
         url.set("https://www.zaproxy.org/docs/desktop/addons/openapi-support/")
+        notBeforeVersion.set("2.10.0")
     }
 
     apiClientGen {
@@ -28,13 +29,13 @@ configurations {
 }
 
 dependencies {
-    implementation("io.swagger.parser.v3:swagger-parser:2.0.18")
-    implementation("io.swagger:swagger-compat-spec-parser:1.0.50") {
+    implementation("io.swagger.parser.v3:swagger-parser:2.0.24")
+    implementation("io.swagger:swagger-compat-spec-parser:1.0.54") {
         // Not needed:
         exclude(group = "com.github.java-json-tools", module = "json-schema-validator")
         exclude(group = "org.apache.httpcomponents", module = "httpclient")
     }
-    implementation("org.slf4j:slf4j-log4j12:1.7.6") {
+    implementation("org.slf4j:slf4j-log4j12:1.7.30") {
         // Provided by ZAP.
         exclude(group = "log4j")
     }

@@ -4,16 +4,21 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+### Changed
+- Update links to zaproxy repo.
+
+## [7] - 2020-12-15
 ### Added
 - Add info and repo URLs.
 
 ### Changed
 - Update the help to mention the bundled JRuby version.
-- Update minimum ZAP version to 2.9.0.
+- Update minimum ZAP version to 2.10.0.
 
 ### Fixed
 - Fix link in a script template.
 - Fix exception while uninstalling the add-on with newer Java versions.
+- Fix passive template.
 
 ## 6 - 2017-11-27
 
@@ -43,3 +48,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - First version
 
+[7]: https://github.com/zaproxy/zap-extensions/releases/jruby-v7

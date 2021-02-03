@@ -5,7 +5,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 ### Changed
+- Update links to zaproxy repo.
+- Target 2.10 core and use new logging infrastructure (Log4j 2.x).
+
+### Added
+- Forbidden (403) Bypass scan rule.
+
+## [30] - 2020-11-26
+### Changed
+- 'Hidden File Finder' ensure that test requests are appropriately rebuilt for this scan rule (Issue 6129).
 - Maintenance changes.
+
+### Fixed
+ - Terminology.
+ - SocketTimeoutException in the LDAP Injection scan rule.
+
+### Removed
+- The following scan rules were removed and promoted to Beta: Cloud Meta Data, .env File, Hidden Files, XSLT Injection (Issue 6211).
+
+## [29] - 2020-08-13
+### Changed
+- Maintenance changes.
+- 'Hidden File Finder' will raise fewer alerts at Thresholds other than High (Issue 6116).
 
 ### Fixed
 - Fixed Mongo DB Injection false positive (Issue 6025).
@@ -205,6 +226,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - First version, including persistent XSS tests
 
+[30]: https://github.com/zaproxy/zap-extensions/releases/ascanrulesAlpha-v30
+[29]: https://github.com/zaproxy/zap-extensions/releases/ascanrulesAlpha-v29
 [28]: https://github.com/zaproxy/zap-extensions/releases/ascanrulesAlpha-v28
 [27]: https://github.com/zaproxy/zap-extensions/releases/ascanrulesAlpha-v27
 [26]: https://github.com/zaproxy/zap-extensions/releases/ascanrulesAlpha-v26

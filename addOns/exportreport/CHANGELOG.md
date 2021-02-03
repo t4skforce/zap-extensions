@@ -4,14 +4,18 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+
+
+## [7] - 2020-12-15
 ### Added
 - Completed PDF Output support (Issue 5535)
 - Added option to specify active scan id in API.
 - Added option to specify inclusion of passive alerts in API and command line.
 - Add info and repo URLs.
+- Maintenance changes.
 
 ### Changed
-- Update minimum ZAP version to 2.9.0.
+- Update minimum ZAP version to 2.10.0.
 
 ## [6] - 2019-06-24
 
@@ -38,4 +42,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - First version
 
+[7]: https://github.com/zaproxy/zap-extensions/releases/exportreport-v7
 [6]: https://github.com/zaproxy/zap-extensions/releases/exportreport-v6

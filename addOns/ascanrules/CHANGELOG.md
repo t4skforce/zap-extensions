@@ -4,7 +4,34 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+### Changed
+- Now using 2.10 logging infrastructure (Log4j 2.x).
 
+## [38] - 2020-12-15
+### Changed
+- Now targeting ZAP 2.10.
+- The following scan rules now support Custom Page definitions:
+  - Buffer Overflow
+  - Directory Browsing
+  - Format String
+  - Parameter Tamper
+  - Path Traversal
+  - Remote File Include
+  - Source Code Disclosure WEB-INF
+
+## [37] - 2020-11-26
+### Changed
+- Maintenance changes.
+
+### Fixed
+- Terminology
+ 
+### Added
+- The following scan rules were promoted to Beta: ELMAH Information Leak, .htaccess Information Leak (Issue 6211).
+
+## [36] - 2020-08-04
+### Changed
+- Maintenance changes.
 
 ## [35] - 2020-06-01
 ### Changed
@@ -210,6 +237,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 
+[38]: https://github.com/zaproxy/zap-extensions/releases/ascanrules-v38
+[37]: https://github.com/zaproxy/zap-extensions/releases/ascanrules-v37
+[36]: https://github.com/zaproxy/zap-extensions/releases/ascanrules-v36
 [35]: https://github.com/zaproxy/zap-extensions/releases/ascanrules-v35
 [34]: https://github.com/zaproxy/zap-extensions/releases/ascanrules-v34
 [33]: https://github.com/zaproxy/zap-extensions/releases/ascanrules-v33

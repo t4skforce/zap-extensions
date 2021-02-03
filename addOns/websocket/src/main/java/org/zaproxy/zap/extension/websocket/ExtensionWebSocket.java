@@ -19,6 +19,7 @@
  */
 package org.zaproxy.zap.extension.websocket;
 
+import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -368,6 +369,7 @@ public class ExtensionWebSocket extends ExtensionAdaptor
                         new WebSocketBreakpointMessageHandler(
                                 extBreak.getBreakpointManagementInterface(), config);
                 wsBrkMessageHandler.setEnabledBreakpoints(extBreak.getBreakpointsEnabledList());
+                wsBrkMessageHandler.setEnabledIgnoreRules(Collections.emptyList());
 
                 // listen on new messages such that breakpoints can apply
                 addAllChannelObserver(new WebSocketProxyListenerBreak(this, wsBrkMessageHandler));
@@ -560,11 +562,6 @@ public class ExtensionWebSocket extends ExtensionAdaptor
     }
 
     @Override
-    public String getAuthor() {
-        return Constant.ZAP_TEAM;
-    }
-
-    @Override
     public String getDescription() {
         return Constant.messages.getString("websocket.desc");
     }
@@ -741,10 +738,13 @@ public class ExtensionWebSocket extends ExtensionAdaptor
             logger.debug(
                     "Got WebSockets upgrade request. Handle socket connection over to WebSockets extension.");
             if (focusWebSocketsTabOnHandshake) {
-                // Show the tab in case its been closed
-                this.getWebSocketPanel().setTabFocus();
                 // Don't constantly request focus on the tab, once is enough.
                 focusWebSocketsTabOnHandshake = false;
+                EventQueue.invokeLater(
+                        () -> {
+                            // Show the tab in case its been closed
+                            this.getWebSocketPanel().setTabFocus();
+                        });
             }
 
             if (method != null) {
@@ -1010,7 +1010,7 @@ public class ExtensionWebSocket extends ExtensionAdaptor
     }
 
     /**
-     * If given channel is blacklisted, then nothing should be stored. Moreover it should not appear
+     * If given channel is deny listed, then nothing should be stored. Moreover it should not appear
      * in user interface, but messages should be forwarded.
      *
      * @param channel
@@ -1020,7 +1020,7 @@ public class ExtensionWebSocket extends ExtensionAdaptor
         boolean doNotStore = false;
 
         if (config.isForwardAll()) {
-            // all channels are blacklisted
+            // all channels are deny listed
             doNotStore = true;
         } else if (!preparedIgnoredChannels.isEmpty()) {
             for (Pattern p : preparedIgnoredChannels) {
