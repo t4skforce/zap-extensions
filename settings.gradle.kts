@@ -7,7 +7,8 @@ include("testutils")
 // Keep the add-ons in alphabetic order.
 var addOns = listOf(
     "accessControl",
-    "aem",
+    "prodScan",
+    "prodScanAEM",
     "alertFilters",
     "alertReport",
     "allinonenotes",

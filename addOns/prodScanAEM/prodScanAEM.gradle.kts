@@ -4,16 +4,20 @@ version = "1"
 description = "Product Scanner"
 
 zapAddOn {
-    addOnName.set("Adobe AEM Scanner")
+    addOnName.set("Product Scanner - Adobe AEM")
     addOnStatus.set(AddOnStatus.ALPHA)
-    zapVersion.set("2.9.0")
+    zapVersion.set("2.10.0")
 
     manifest {
         author.set("Florian Neumair")
         url.set("")
+        notBeforeVersion.set("2.10.0")
+        extensions {
+            register("org.zaproxy.zap.extension.prodscan.aem.ExtensionProdScanAdobeAEM")
+        }
         bundle {
-            baseName.set("org.zaproxy.zap.extension.prodscan.aem.resources.Messages")
-            prefix.set("prodscan.aem")
+            baseName.set("org.zaproxy.zap.extension.prodScanAEM.resources.Messages")
+            prefix.set("prodScanAEM")
         }
         dependencies {
             addOns {
@@ -30,14 +34,6 @@ dependencies {
 	
     // tests
     testImplementation(project(":testutils"))
-
-    // compileOnly(parent!!.childProjects.get("selenium")!!)
-    implementation("org.yaml:snakeyaml:1.26")
-    // json query
-    implementation("net.thisptr:jackson-jq:1.0.0-preview.20191208")
-    // html query
-    implementation("org.jdom:jdom:1.1.3")
-    implementation("org.jsoup:jsoup:1.7.2")
     // reflections
     implementation("org.reflections:reflections:0.9.12")
     // commons collection
