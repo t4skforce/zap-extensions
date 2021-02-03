@@ -1,0 +1,28 @@
+---
+- name: Groovy Console reachable
+  alertId: 500233
+  wacsId: 1
+  alertId: 
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      first-match: true
+      paths:
+      - "/bin/groovyconsole/post.servlet"
+      - "/bin/groovyconsole/post.servlet;%0aa.css"
+      - "/bin/groovyconsole/post.servlet;%0aa.js"
+      - "/bin/groovyconsole/post.servlet;%0aa.json"
+      - "/bin/groovyconsole/post.servlet;%0aa.xml"
+      - "/bin/groovyconsole/post.servlet;%0aa.html"
+      - "/bin/groovyconsole/post.servlet;%0aa.png"
+      - "/bin/groovyconsole/post.servlet;%0aa.gif"
+      - "/bin/groovyconsole/post.servlet;%0aa.swf"
+      headers:
+        Content-Type: application/x-www-form-urlencoded 
+      body: "script=prinln%20%22NzM5ZDBhZmMtODYyYi00NjA1LTk2N2YtYjBjNzlkM2RiMTQ1%22.decodeBase64%28%29"
+    response:
+      header:
+        text: true
+      body:
+        string: 739d0afc-862b-4605-967f-b0c79d3db145

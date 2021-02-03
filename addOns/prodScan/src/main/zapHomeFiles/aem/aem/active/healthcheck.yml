@@ -1,0 +1,30 @@
+---
+- name: Adobe Experience Manager Healtcheck reachable
+  alertId: 50029
+  wacsId: 15
+  risk: MEDIUM
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/systemalive"
+      - "/systemready"
+    response:
+      header:
+        json: true
+      body:
+        json: .systemStatus
+
+- name: Adobe Experience Manager Healtcheck reachable
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/libs/granite/operations/content/healthreports/healthreportlist.html"
+    response:
+      header:
+        html: true
+      body:
+        css: coral-card-property-content:contains(Status)

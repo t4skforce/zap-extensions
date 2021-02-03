@@ -1,0 +1,22 @@
+---
+- name: Adobe Experience Manager Web Console reachable
+  alertId: 50026
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/system/console/topology"
+      - "/system/console/configMgr"
+      - "/system/console/productinfo"
+    response:
+      header:
+        status: 302
+        regex: "(?im)Location:\\s+.*?\\/libs\\/granite\\/core\\/content\\/login.html"
+  - request:
+      paths:
+      - "/system/console/res"
+    response:
+      header:
+        empty: true

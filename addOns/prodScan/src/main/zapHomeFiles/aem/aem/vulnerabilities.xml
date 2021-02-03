@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<vulnerabilities>
+	<vulnerability alertId="50026">
+			<name>Adobe Experience Manager Author functions reachable</name>
+			<description/>
+			<solution>
+To safely enable full functionality on the publish instances, configure filters to prevent access to the following nodes:
+* /etc/*
+* /libs/*
+* /admin/*
+* /crx/*
+* /system/*
+* /apps/*
+* /bin/*
+* /content*
+* /libs/*
+* /libs/shindig/proxy*
+* /home/*
+* /tmp/*
+* /var/*
+
+Then, configure filters to allow access to the following node paths:
+* /etc/designs/*
+* /etc/clientlibs/*
+* /etc/segmentation.segment.js
+* /libs/cq/personalization/components/clickstreamcloud/content/config.json
+* /libs/wcm/stats/tracker.js
+* /libs/cq/personalization/* (JS, CSS and JSON)
+* /libs/cq/security/userinfo.json (CQ user information)
+* /libs/granite/security/currentuser.json ( data must not be cached )
+* /libs/cq/i18n/* (Internalization)
+* /libs/granite/csrf/token.json
+			</solution>
+			<otherInfo/>
+			<references>
+				<reference>https://helpx.adobe.com/experience-manager/6-3/sites/administering/using/security-checklist.html</reference>
+				<reference>https://docs.adobe.com/content/help/en/experience-manager-dispatcher/using/getting-started/security-checklist.html</reference>
+			</references>
+	</vulnerability>
+</vulnerabilities>

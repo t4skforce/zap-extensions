@@ -1,0 +1,14 @@
+---
+- name: Adobe Experience Manager CSRF Token
+  alertId: 500231
+  wacsId: 15
+  risk: LOW
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/libs/granite/csrf/token.json"
+    response:
+      header:
+        status: 200
+        empty: true

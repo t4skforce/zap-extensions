@@ -1,0 +1,27 @@
+---
+- name: Adobe Experience Manager Login Page reachable
+  alertId: 50028
+  wacsId: 15
+  risk: HIGH
+  confidence: HIGH
+  checks:
+  - request:
+      paths:
+      - "/libs/granite/core/content/login.html"
+    response:
+      header:
+        status: 200
+      body:
+        css: meta[name='granite.login.imsLoginUrl']
+  - request:
+      method: POST
+      paths:
+      - "/libs/granite/core/content/login.html/j_security_check"
+      headers:
+        Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+      body: "_charset_=utf-8&j_username=&j_password=&j_validate=true"
+    response:
+      header:
+        status: 403
+      body:
+        string: invalid_login
