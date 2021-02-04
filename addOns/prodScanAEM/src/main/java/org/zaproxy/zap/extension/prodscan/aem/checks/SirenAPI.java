@@ -37,7 +37,8 @@ public class SirenAPI extends AbstractHostScan {
 
     private static final String MESSAGE_PREFIX = "aem.api.siren";
 
-    private static final List<String> PATHS = Arrays.asList("/api.json", "/api/content.json", "/api/screens.json");
+    private static final List<String> PATHS = Arrays.asList("/api.json", "/api/assets.json", "/api/content.json",
+            "/api/screens.json", "/api/screens-dcc.json");
 
     public static final int ID = 5002;
 
@@ -82,7 +83,7 @@ public class SirenAPI extends AbstractHostScan {
                 .flatMap(Function.identity())
                 .filter(sendAndReceive(msg -> {
                     if (isSuccess(msg)) {
-                        Optional<String> json = JsonUtil.query(msg, ".links[0].href");
+                        Optional<String> json = JsonUtil.string(msg, ".links[0].href");
                         json.ifPresent(evidence -> msg.setNote(evidence));
                         return json.isPresent();
                     } else if (isServerError(msg)) {
@@ -96,4 +97,5 @@ public class SirenAPI extends AbstractHostScan {
                     newAlert().setEvidence(msg.getNote()).setMessage(msg).raise();
                 });
     }
+
 }
