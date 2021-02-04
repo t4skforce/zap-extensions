@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Category;
 import org.parosproxy.paros.network.HttpMessage;
-import org.parosproxy.paros.network.HttpResponseHeader;
 import org.zaproxy.zap.extension.prodscan.aem.base.AbstractHostScan;
 import org.zaproxy.zap.extension.prodscan.aem.exploit.BasicAuthLoginSupported;
 import org.zaproxy.zap.extension.prodscan.util.HistoryUtil;
@@ -90,16 +89,13 @@ public class LoginStatusServlet extends AbstractHostScan implements BasicAuthLog
                     .map(origin -> fuzzDispatcher(origin))
                     .flatMap(Function.identity())
                     .filter(sendAndReceive(msg -> {
-                        HttpResponseHeader header = msg.getResponseHeader();
-                        int statusCode = header.getStatusCode();
-                        if (header.getStatusCode() == 200) {
+                        if (isSuccess(msg)) {
                             Optional<String> auth = RegexUtil.find(msg, RE_AUTHENTICATED_TRUE_FALSE);
                             msg.setNote(auth.orElse(StringUtils.EMPTY));
                             return auth.isPresent();
-                        } else if (statusCode >= 500) {
-                            // this could be interesting for passive
-                            // rules
-                            HistoryUtil.addForPassiveScan(msg, "error");
+                        } else if (isServerError(msg)) {
+                            // this could be interesting for passive rules
+                            HistoryUtil.addForPassiveScan(msg, "AEM", "Error");
                         }
                         return false;
                     }, false))

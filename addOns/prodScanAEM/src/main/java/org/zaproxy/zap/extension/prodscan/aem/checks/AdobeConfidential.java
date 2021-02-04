@@ -96,13 +96,15 @@ public class AdobeConfidential extends AbstractHostScan {
 
     @Override
     public void doScan(HttpMessage baseMessage) throws Exception {
+
         getPaths().stream()
                 .map(path -> HttpMessageWrapperUtil.get(getBaseMsg(), path).orElse(null))
                 .filter(Objects::nonNull)
                 .filter(sendAndReceive(msg -> {
                     HttpResponseHeader header = msg.getResponseHeader();
-                    int statusCode = header.getStatusCode();
-                    if (header.getStatusCode() == 200 && header.isText()) {
+                    if (isSuccess(msg) && header.isText()) {
+                        // this could be interesting for passive rules
+                        HistoryUtil.addForPassiveScan(msg, "AEM");
                         HttpResponseBody body = msg.getResponseBody();
                         String bodyStr = body.toString();
                         if (StringUtils.containsIgnoreCase(bodyStr, ADOBE_CONFIDENTIAL)) {
@@ -112,9 +114,9 @@ public class AdobeConfidential extends AbstractHostScan {
                             msg.setNote(JCR_REPOSITORY);
                             return true;
                         }
-                    } else if (statusCode >= 500) {
+                    } else if (isServerError(msg)) {
                         // this could be interesting for passive rules
-                        HistoryUtil.addForPassiveScan(msg, "error");
+                        HistoryUtil.addForPassiveScan(msg, "AEM", "Error");
                     }
                     return false;
                 }, false))
@@ -122,4 +124,5 @@ public class AdobeConfidential extends AbstractHostScan {
                     newAlert().setEvidence(msg.getNote()).setMessage(msg).setRisk(Alert.RISK_INFO).raise();
                 });
     }
+
 }

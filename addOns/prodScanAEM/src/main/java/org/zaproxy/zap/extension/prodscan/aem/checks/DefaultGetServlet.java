@@ -27,7 +27,6 @@ import java.util.function.Function;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Category;
 import org.parosproxy.paros.network.HttpMessage;
-import org.parosproxy.paros.network.HttpResponseHeader;
 import org.zaproxy.zap.extension.prodscan.aem.base.AbstractHostScan;
 import org.zaproxy.zap.extension.prodscan.util.HttpMessageWrapperUtil;
 import org.zaproxy.zap.extension.prodscan.util.fuzzer.HttpRequestFuzzBuilder;
@@ -83,12 +82,7 @@ public class DefaultGetServlet extends AbstractHostScan {
                 .map(origin -> fuzzDispatcher(origin))
                 .flatMap(Function.identity())
                 .filter(sendAndReceive(msg -> {
-                    HttpResponseHeader header = msg.getResponseHeader();
-                    int statusCode = header.getStatusCode();
-                    if (statusCode == 200) {
-                        return true;
-                    }
-                    return false;
+                    return isSuccess(msg) || isClientError(msg);
                 }, false))
                 .findFirst()
                 .ifPresent(msg -> {

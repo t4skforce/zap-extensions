@@ -135,3 +135,8 @@ http://localhost:4502/libs/granite/security/currentuser.json
 	"home": "/home/users/V/VvzHoqjYcjpbijKWoopJ",
 	"isImpersonated": false
 }
+
+
+
+# List of Endpoints?
+http://localhost:4502/system/console/status-jcrresolver

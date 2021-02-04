@@ -30,7 +30,6 @@ import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Category;
 import org.parosproxy.paros.network.HttpMessage;
-import org.parosproxy.paros.network.HttpResponseHeader;
 import org.zaproxy.zap.extension.prodscan.aem.base.AbstractHostScan;
 import org.zaproxy.zap.extension.prodscan.util.HTMLUtil;
 import org.zaproxy.zap.extension.prodscan.util.HistoryUtil;
@@ -95,13 +94,11 @@ public class DefaultPostServlet extends AbstractHostScan {
                 .map(origin -> fuzzDispatcher(origin))
                 .flatMap(Function.identity())
                 .filter(sendAndReceive(msg -> {
-                    HttpResponseHeader header = msg.getResponseHeader();
-                    int statusCode = header.getStatusCode();
-                    if (statusCode == 500) {
+                    if (isServerError(msg)) {
                         Optional<String> json = HTMLUtil.html(msg, "#Message:contains(" + PERSISTANCE_EXCEPTION
                                 + "),#Message:contains(" + SLING_EXCEPTION + ")");
                         json.ifPresent(evidence -> msg.setNote(evidence));
-                        HistoryUtil.addForPassiveScan(msg, "AEM");
+                        HistoryUtil.addForPassiveScan(msg, "AEM", "Error");
                         return true;
                     }
                     return false;

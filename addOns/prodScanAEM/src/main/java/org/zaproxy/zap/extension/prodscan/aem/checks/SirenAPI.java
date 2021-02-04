@@ -28,7 +28,6 @@ import java.util.function.Function;
 import org.parosproxy.paros.core.scanner.Alert;
 import org.parosproxy.paros.core.scanner.Category;
 import org.parosproxy.paros.network.HttpMessage;
-import org.parosproxy.paros.network.HttpResponseHeader;
 import org.zaproxy.zap.extension.prodscan.aem.base.AbstractHostScan;
 import org.zaproxy.zap.extension.prodscan.util.HistoryUtil;
 import org.zaproxy.zap.extension.prodscan.util.HttpMessageWrapperUtil;
@@ -82,15 +81,13 @@ public class SirenAPI extends AbstractHostScan {
                 .map(origin -> fuzzDispatcher(origin))
                 .flatMap(Function.identity())
                 .filter(sendAndReceive(msg -> {
-                    HttpResponseHeader header = msg.getResponseHeader();
-                    int statusCode = header.getStatusCode();
-                    if (statusCode == 200) {
+                    if (isSuccess(msg)) {
                         Optional<String> json = JsonUtil.query(msg, ".links[0].href");
                         json.ifPresent(evidence -> msg.setNote(evidence));
                         return json.isPresent();
-                    } else if (statusCode >= 500) {
+                    } else if (isServerError(msg)) {
                         // this could be interesting for passive rules
-                        HistoryUtil.addForPassiveScan(msg, "error");
+                        HistoryUtil.addForPassiveScan(msg, "AEM", "Error");
                     }
                     return false;
                 }, false))
