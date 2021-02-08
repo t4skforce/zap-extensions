@@ -40,6 +40,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.log4j.Logger;
 import org.parosproxy.paros.network.HttpMessage;
+import org.zaproxy.zap.extension.prodscan.util.URIUtils;
 import org.zaproxy.zap.extension.prodscan.util.wrapper.HttpMessageWrapper;
 
 public class HttpRequestFuzzBuilder {
@@ -136,7 +137,7 @@ public class HttpRequestFuzzBuilder {
     public HttpRequestFuzzBuilder setQueryParam(String... queries) {
         List<HttpMessageWrapper> newMessages = new ArrayList<>();
         for (HttpMessageWrapper msg : msgs) {
-            newMessages.addAll(setQueryParam(msg, queries));
+            newMessages.addAll(setQueryParams(msg, queries));
         }
         msgs.addAll(newMessages);
         return this;
@@ -181,20 +182,16 @@ public class HttpRequestFuzzBuilder {
             return Collections.emptyList();
         }
         URI origin = originalMsg.getRequestHeader().getURI();
-        return Arrays.asList(extensions).stream().filter(Objects::nonNull).map(extension -> {
-            HttpMessageWrapper msg = originalMsg.cloneRequest();
-            try {
-                Optional<String> newPath = setFileExtension(origin.getPath(), extension);
-                if (newPath.isPresent()) {
-                    msg.getRequestHeader()
-                            .setURI(new URI(origin.getScheme(), origin.getAuthority(), newPath.get(), origin.getQuery(),
-                                    origin.getFragment()));
-                    return msg;
+        return Arrays.asList(extensions).stream().filter(Objects::nonNull).map(newExt -> {
+            return URIUtils.setFileExtension(origin, newExt).map(uri -> {
+                HttpMessageWrapper msg = originalMsg.cloneRequest();
+                try {
+                    msg.getRequestHeader().setURI(uri);
+                } catch (URIException e) {
+                    return null;
                 }
-            } catch (URIException e) {
-                LOG.error(e.getMessage(), e);
-            }
-            return null;
+                return msg;
+            }).orElse(null);
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
@@ -211,19 +208,15 @@ public class HttpRequestFuzzBuilder {
         }
         URI origin = originalMsg.getRequestHeader().getURI();
         return Arrays.asList(prefixes).stream().filter(Objects::nonNull).map(prefix -> {
-            HttpMessageWrapper msg = originalMsg.cloneRequest();
-            try {
-                Optional<String> newPath = prependFileExtension(origin.getPath(), prefix);
-                if (newPath.isPresent()) {
-                    msg.getRequestHeader()
-                            .setURI(new URI(origin.getScheme(), origin.getAuthority(), newPath.get(), origin.getQuery(),
-                                    origin.getFragment()));
-                    return msg;
+            return URIUtils.prependFileExtension(origin, prefix).map(uri -> {
+                HttpMessageWrapper msg = originalMsg.cloneRequest();
+                try {
+                    msg.getRequestHeader().setURI(uri);
+                } catch (URIException e) {
+                    return null;
                 }
-            } catch (URIException e) {
-                LOG.error(e.getMessage(), e);
-            }
-            return null;
+                return msg;
+            }).orElse(null);
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
@@ -235,7 +228,7 @@ public class HttpRequestFuzzBuilder {
      * @return
      */
     public static List<HttpMessageWrapper> appendFileExtension(HttpMessageWrapper originalMsg, String... postfixes) {
-        return appendWithSeparator(originalMsg, ".", postfixes);
+        return appendWithSeparator(originalMsg, URIUtils.FILE_EXTENSION_SEPARATOR, postfixes);
     }
 
     /**
@@ -246,7 +239,7 @@ public class HttpRequestFuzzBuilder {
      * @return
      */
     public static List<HttpMessageWrapper> appendPath(HttpMessageWrapper originalMsg, String... postfixes) {
-        return appendWithSeparator(originalMsg, "/", postfixes);
+        return appendWithSeparator(originalMsg, URIUtils.PATH_SEPARATOR, postfixes);
     }
 
     /**
@@ -274,19 +267,15 @@ public class HttpRequestFuzzBuilder {
         }
         URI origin = originalMsg.getRequestHeader().getURI();
         return Arrays.asList(postfixes).stream().filter(Objects::nonNull).map(postfix -> {
-            HttpMessageWrapper msg = originalMsg.cloneRequest();
-            try {
-
-                msg.getRequestHeader()
-                        .setURI(new URI(origin.getScheme(), origin.getAuthority(),
-                                StringUtils.join(Arrays.asList(origin.getPath(), postfix), separator),
-                                origin.getQuery(), origin.getFragment()));
+            return URIUtils.appendWithSeparator(origin, separator, postfix).map(uri -> {
+                HttpMessageWrapper msg = originalMsg.cloneRequest();
+                try {
+                    msg.getRequestHeader().setURI(uri);
+                } catch (URIException e) {
+                    return null;
+                }
                 return msg;
-
-            } catch (URIException e) {
-                LOG.error(e.getMessage(), e);
-            }
-            return null;
+            }).orElse(null);
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
@@ -296,45 +285,34 @@ public class HttpRequestFuzzBuilder {
         }
         URI origin = originalMsg.getRequestHeader().getURI();
         return Arrays.asList(separators).stream().filter(Objects::nonNull).map(separator -> {
-            HttpMessageWrapper msg = originalMsg.cloneRequest();
-            try {
-                String path = StringUtils.replaceEachRepeatedly(origin.getPath(), new String[] { "//" },
-                        new String[] { "" });
-                if (StringUtils.contains(path, '/')) {
-                    msg.getRequestHeader()
-                            .setURI(new URI(origin.getScheme(), origin.getAuthority(),
-                                    StringUtils.replace(path, "/", separator), origin.getQuery(),
-                                    origin.getFragment()));
-                    return msg;
-                } else {
-                    msg.getRequestHeader()
-                            .setURI(new URI(origin.getScheme(), origin.getAuthority(), separator + path,
-                                    origin.getQuery(), origin.getFragment()));
-                    return msg;
+            return URIUtils.setPathSeparator(origin, separator).map(uri -> {
+                HttpMessageWrapper msg = originalMsg.cloneRequest();
+                try {
+                    msg.getRequestHeader().setURI(uri);
+                } catch (URIException e) {
+                    return null;
                 }
-            } catch (URIException e) {
-                LOG.error(e.getMessage(), e);
-            }
-            return null;
+                return msg;
+            }).orElse(null);
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    public static List<HttpMessageWrapper> setQueryParam(HttpMessageWrapper originalMsg, String... queries) {
+    public static List<HttpMessageWrapper> setQueryParams(HttpMessageWrapper originalMsg, String... queries) {
         if (Objects.isNull(originalMsg) || Objects.isNull(queries)) {
             return Collections.emptyList();
         }
         URI origin = originalMsg.getRequestHeader().getURI();
         return Arrays.asList(queries).stream().filter(Objects::nonNull).map(query -> {
-            HttpMessageWrapper msg = originalMsg.cloneRequest();
-            try {
-                msg.getRequestHeader()
-                        .setURI(new URI(origin.getScheme(), origin.getAuthority(), origin.getPath(), query,
-                                origin.getFragment()));
+            return URIUtils.setQueryParams(origin, query).map(uri -> {
+                HttpMessageWrapper msg = originalMsg.cloneRequest();
+                try {
+                    msg.getRequestHeader().setURI(uri);
+                } catch (URIException e) {
+                    return null;
+                }
                 return msg;
-            } catch (URIException e) {
-                LOG.error(e.getMessage(), e);
-            }
-            return null;
+            }).orElse(null);
+
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
@@ -362,29 +340,4 @@ public class HttpRequestFuzzBuilder {
         }).filter(Objects::nonNull);
     }
 
-    private static Optional<String> prependFileExtension(String path, String prefix) {
-        int i = path.indexOf(".", path.lastIndexOf('/'));
-        if (i != -1 && i != path.length() - 1) {
-            String ext = StringUtils.substring(path, i + 1, path.length());
-            if (!StringUtils.equalsIgnoreCase(ext, prefix)) {
-                return Optional.of(StringUtils.substring(path, 0, i))
-                        .map(p -> StringUtils.join(Arrays.asList(p, prefix, ext), '.'));
-            }
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<String> setFileExtension(String path, String newExt) {
-        int i = path.indexOf(".", path.lastIndexOf('/'));
-        if (i != -1 && i != path.length() - 1) {
-            String ext = StringUtils.substring(path, i + 1, path.length());
-            if (!StringUtils.equalsIgnoreCase(ext, newExt)) {
-                return Optional.of(StringUtils.substring(path, 0, i))
-                        .map(p -> StringUtils.join(Arrays.asList(p, newExt), '.'));
-            }
-        } else {
-            return Optional.of(StringUtils.join(Arrays.asList(path, newExt), '.'));
-        }
-        return Optional.empty();
-    }
 }

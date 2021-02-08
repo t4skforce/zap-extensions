@@ -3,7 +3,6 @@ package org.zaproxy.zap.extension.prodscan.aem.spider;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.zap.extension.prodscan.util.JsonUtil;
 import org.zaproxy.zap.spider.parser.SpiderParser;
@@ -26,7 +25,7 @@ public class SirenApiSpiderParser extends SpiderParser {
 
     @Override
     public boolean canParseResource(HttpMessage msg, String path, boolean wasAlreadyConsumed) {
-        return StringUtils.startsWithIgnoreCase(path, "/api");
+        return SirenApiParseFilter.validate(msg);
     }
 
 }

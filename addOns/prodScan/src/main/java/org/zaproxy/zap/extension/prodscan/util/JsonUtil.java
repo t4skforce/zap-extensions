@@ -60,7 +60,6 @@ public abstract class JsonUtil {
 
     public static final Optional<String> string(final HttpMessage msg, final String query, final Boolean raw) {
         return Optional.ofNullable(msg)
-                .filter(m -> m.getRequestHeader().isText())
                 .map(m -> m.getResponseBody().toString())
                 .map(s -> string(new ByteArrayInputStream(s.getBytes()), query, raw))
                 .orElse(Optional.empty());
@@ -110,7 +109,6 @@ public abstract class JsonUtil {
 
     public static final Optional<List<String>> strings(final HttpMessage msg, final String query, final Boolean raw) {
         return Optional.ofNullable(msg)
-                .filter(m -> m.getRequestHeader().isText())
                 .map(m -> m.getResponseBody().toString())
                 .map(s -> strings(new ByteArrayInputStream(s.getBytes()), query, raw))
                 .orElse(Optional.empty());

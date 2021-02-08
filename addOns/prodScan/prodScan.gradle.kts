@@ -27,7 +27,7 @@ dependencies {
     testImplementation(project(":testutils"))
 
     // json query
-    implementation("net.thisptr:jackson-jq:1.0.0-preview.20191208")
+    implementation("net.thisptr:jackson-jq:1.0.0-preview.20201123")
     // html query
     implementation("org.jdom:jdom:1.1.3")
     implementation("org.jsoup:jsoup:1.7.2")

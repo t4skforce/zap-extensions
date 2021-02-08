@@ -176,7 +176,7 @@ public class HttpRequestFuzzBuilderTest {
 				.appendPath("ZAP.css", "ZAP.js", "ZAP.html", "ZAP.gif", "ZAP.png", "ZAP.json", "ZAP.ico", "ZAP.jpg",
 						"ZAP.jpeg", "ZAP.swf", "ZAP.xml", "ZAP.clientlibs", "ZAP.servlet", "ZAP.1.json",
 						"ZAP...4.2.1...json")
-				.setQueryParam("ZAP.css", "ZAP.js", "ZAP.html", "ZAP.gif", "ZAP.png", "ZAP.json", "ZAP.ico", "ZAP.jpg",
+				.setQueryParams("ZAP.css", "ZAP.js", "ZAP.html", "ZAP.gif", "ZAP.png", "ZAP.json", "ZAP.ico", "ZAP.jpg",
 						"ZAP.jpeg", "ZAP.swf", "ZAP.xml", "ZAP.clientlibs", "ZAP.servlet", "ZAP.1.json",
 						"ZAP...4.2.1...json")
 				.build();
