@@ -34,7 +34,7 @@ import org.zaproxy.zap.extension.prodscan.util.fuzzer.HttpRequestFuzzBuilder;
 public class DefaultGetServlet extends AbstractHostScan {
 
     public static final int ID = 5004;
-    private static final String MESSAGE_PREFIX = "aem.get.servlet";
+    private static final String MESSAGE_PREFIX = "prodScanAEM.get.servlet";
     private static final List<String> PATHS = Arrays.asList("/", "/etc", "/var", "/apps", "/home");
 
     @Override

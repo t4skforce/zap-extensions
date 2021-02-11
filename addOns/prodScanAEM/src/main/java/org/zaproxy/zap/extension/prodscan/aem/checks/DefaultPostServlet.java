@@ -42,9 +42,9 @@ public class DefaultPostServlet extends AbstractHostScan {
 
     private static final String SLING_EXCEPTION = "org.apache.sling.api.SlingException";
 
-    private static final String MESSAGE_PREFIX = "aem.post.servlet";
+    private static final String MESSAGE_PREFIX = "prodScanAEM.post.servlet";
 
-    private static final String CVE_PREFIX = "aem.post.servlet.cve";
+    private static final String CVE_PREFIX = "prodScanAEM.post.servlet.cve";
 
     private static final List<String> PATHS = Arrays.asList("/", "/content", "/content/dam");
 

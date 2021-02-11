@@ -35,7 +35,7 @@ import org.zaproxy.zap.extension.prodscan.util.JsonUtil;
 
 public class SirenAPI extends AbstractHostScan {
 
-    private static final String MESSAGE_PREFIX = "aem.api.siren";
+    private static final String MESSAGE_PREFIX = "prodScanAEM.api.siren";
 
     private static final List<String> PATHS = Arrays.asList("/api.json", "/api/assets.json", "/api/content.json",
             "/api/screens.json", "/api/screens-dcc.json");

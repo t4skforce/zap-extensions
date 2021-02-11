@@ -42,7 +42,7 @@ public class LoginStatusServlet extends AbstractHostScan implements BasicAuthLog
 
     private static final String SYSTEM_SLING_LOGINSTATUS = "/system/sling/loginstatus";
 
-    private static final String MESSAGE_PREFIX = "aem.loginstatus";
+    private static final String MESSAGE_PREFIX = "prodScanAEM.loginstatus";
 
     private static final String USERID = "userid=";
 

@@ -64,6 +64,10 @@ public abstract class AbstractHostScan extends AbstractHostPlugin {
         return Constant.messages.getString(getMessagePrefix() + ".reference");
     }
 
+    public String getOtherInfo() {
+        return Constant.messages.getString(getMessagePrefix() + ".otherinfo");
+    }
+
     @Override
     public void scan() {
         try {

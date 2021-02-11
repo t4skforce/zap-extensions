@@ -42,7 +42,7 @@ public class AdobeConfidential extends AbstractHostScan {
 
     private static final String ADOBE_CONFIDENTIAL = "ADOBE CONFIDENTIAL";
 
-    private static final String MESSAGE_PREFIX = "aem.static.files";
+    private static final String MESSAGE_PREFIX = "prodScanAEM.static.files";
 
     public static final int ID = 5001;
 

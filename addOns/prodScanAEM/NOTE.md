@@ -140,3 +140,5 @@ http://localhost:4502/libs/granite/security/currentuser.json
 
 # List of Endpoints?
 http://localhost:4502/system/console/status-jcrresolver
+
+
