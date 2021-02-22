@@ -142,3 +142,11 @@ http://localhost:4502/libs/granite/security/currentuser.json
 http://localhost:4502/system/console/status-jcrresolver
 
 
+# ACLTestXSS recommended fix for dispatcher
+
+## Deny dot dot semicolon attack
+/0023 { /type "deny" /url '.*/[.][.];/.*' }
+## Block dot dot semicolon attack
+RewriteCond %{REQUEST_URI} ^.*\.\.;.*
+RewriteRule ".*" "-" [R=404]
+
